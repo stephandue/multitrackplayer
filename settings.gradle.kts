@@ -21,4 +21,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "multitrackplayer"
 include(":app")
+include(":parselib")
+include(":iolib")
  
