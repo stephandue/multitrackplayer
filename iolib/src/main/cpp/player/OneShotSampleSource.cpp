@@ -42,106 +42,23 @@ void OneShotSampleSource::mixAudio(float* outBuff, int numChannels, int32_t numF
         mSoundTouch.putSamples(data + mCurSampleIndex, numWriteFrames);
 
         // Calculate the actual number of processed frames
-        //mSoundTouch.receiveSamples(processedSamples.data(), numWriteFrames);
-        int numProcessedFrames = mSoundTouch.receiveSamples(processedSamples.data(), numWriteFrames);
+        mSoundTouch.receiveSamples(processedSamples.data(), numWriteFrames);
 
-        //LOGD("numProcessedFrames: %d", numProcessedFrames);
+        LOGD("sampleChannels: %d", sampleChannels);
+        LOGD("numChannels: %d", numChannels);
+        LOGD("numWriteFrames: %d", numWriteFrames);
 
-        // Adjust numWriteFrames based on actual processed frames
-        numWriteFrames = numProcessedFrames;
-
-        // Ensure we have enough samples processed
-        if (numProcessedFrames < numWriteFrames) {
-            // Handle the case where fewer samples are received
-            memset(processedSamples.data() + numProcessedFrames * sampleChannels, 0,
-                   (numWriteFrames - numProcessedFrames) * sampleChannels * sizeof(float));
+        int dstSampleIndex = 0;
+        for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++) {
+            outBuff[dstSampleIndex++] += processedSamples[frameIndex * 2] * mLeftGain;
+            outBuff[dstSampleIndex++] += processedSamples[frameIndex * 2 + 1] * mRightGain;
+//            outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mLeftGain;
+//            outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mRightGain;
         }
-
-        // Ensure we have enough samples processed
-        /*int numReceived = mSoundTouch.receiveSamples(processedSamples.data(), numWriteFrames);
-        if (numReceived < numWriteFrames) {
-            // Handle the case where fewer samples are received
-            memset(processedSamples.data() + numReceived * sampleChannels, 0,
-                   (numWriteFrames - numReceived) * sampleChannels * sizeof(float));
-        }*/
-
-        /*int numReceived = 0;
-        int totalProcessed = 0;
-
-        while (totalProcessed < numWriteFrames) {
-            numReceived = mSoundTouch.receiveSamples(processedSamples.data() + totalProcessed * sampleChannels, numWriteFrames - totalProcessed);
-            if (numReceived == 0) {
-                // If no samples received, break the loop to avoid infinite loop
-                break;
-            }
-            totalProcessed += numReceived;
-        }*/
-
-        if ((sampleChannels == 1) && (numChannels == 1)) {
-            // MONO output from MONO samples
-            for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++) {
-                outBuff[frameIndex] += processedSamples[frameIndex] * mGain;
-            }
-        } else if ((sampleChannels == 1) && (numChannels == 2)) {
-            // STEREO output from MONO samples
-            int dstSampleIndex = 0;
-            for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++) {
-                outBuff[dstSampleIndex++] += processedSamples[frameIndex] * mLeftGain;
-                outBuff[dstSampleIndex++] += processedSamples[frameIndex] * mRightGain;
-            }
-        } else if ((sampleChannels == 2) && (numChannels == 1)) {
-            // MONO output from STEREO samples
-            int dstSampleIndex = 0;
-            for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++) {
-                outBuff[dstSampleIndex++] += processedSamples[frameIndex * 2] * mLeftGain +
-                                             processedSamples[frameIndex * 2 + 1] * mRightGain;
-            }
-        } else if ((sampleChannels == 2) && (numChannels == 2)) {
-            // STEREO output from STEREO samples
-            int dstSampleIndex = 0;
-            for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++) {
-                outBuff[dstSampleIndex++] += processedSamples[frameIndex * 2] * mLeftGain;
-                outBuff[dstSampleIndex++] += processedSamples[frameIndex * 2 + 1] * mRightGain;
-            }
-        }
-
         mCurSampleIndex += numWriteFrames * sampleChannels;
         if (mCurSampleIndex >= numSamples) {
             mIsPlaying = false;
         }
-
-        // Without any processing
-        /*if ((sampleChannels == 1) && (numChannels == 1)) {
-            // MONO output from MONO samples
-            for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++) {
-                outBuff[frameIndex] += data[mCurSampleIndex++] * mGain;
-            }
-        } else if ((sampleChannels == 1) && (numChannels == 2)) {
-            // STEREO output from MONO samples
-            int dstSampleIndex = 0;
-            for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++) {
-                outBuff[dstSampleIndex++] += data[mCurSampleIndex] * mLeftGain;
-                outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mRightGain;
-            }
-        } else if ((sampleChannels == 2) && (numChannels == 1)) {
-            // MONO output from STEREO samples
-            int dstSampleIndex = 0;
-            for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++) {
-                outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mLeftGain +
-                                             data[mCurSampleIndex++] * mRightGain;
-            }
-        } else if ((sampleChannels == 2) && (numChannels == 2)) {
-            // STEREO output from STEREO samples
-            int dstSampleIndex = 0;
-            for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++) {
-                outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mLeftGain;
-                outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mRightGain;
-            }
-        }
-
-        if (mCurSampleIndex >= numSamples) {
-            mIsPlaying = false;
-        }*/
 
     }  else {
         LOGD("No frames to write.");
