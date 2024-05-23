@@ -101,8 +101,7 @@ public:
 
     float getCurrentTimeInSeconds() {
         int32_t sampleRate = mSampleBuffer->getSampleRate() * 2;
-        LOGD("sampleRate: %d", sampleRate);
-        LOGD("mCurSampleIndex: %d", mCurSampleIndex);
+        LOGD("sampleRate: %d mCurSampleIndex: %d", sampleRate,mCurSampleIndex);
         if (sampleRate > 0) {
             return static_cast<float>(mCurSampleIndex) / sampleRate;
         } else {

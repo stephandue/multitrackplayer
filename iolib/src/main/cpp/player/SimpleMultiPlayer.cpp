@@ -31,7 +31,7 @@ using namespace parselib;
 
 namespace iolib {
 
-constexpr int32_t kBufferSizeInBursts = 2048; // Use 2 bursts as the buffer size (double buffer)
+constexpr int32_t kBufferSizeInBursts = 2; // Use 2 bursts as the buffer size (double buffer)
 
 SimpleMultiPlayer::SimpleMultiPlayer()
   : mChannelCount(0), mOutputReset(false), mSampleRate(0), mNumSampleBuffers(0)
@@ -113,14 +113,17 @@ bool SimpleMultiPlayer::openStream() {
     // Reduce stream latency by setting the buffer size to a multiple of the burst size
     // Note: this will fail with ErrorUnimplemented if we are using a callback with OpenSL ES
     // See oboe::AudioStreamBuffered::setBufferSizeInFrames
-    LOGD("setFramesPerBurst(): %d", mAudioStream->getFramesPerBurst());
-    LOGD("setBufferSizeInFrames: %d", mAudioStream->getFramesPerBurst() * kBufferSizeInBursts);
-    result = mAudioStream->setBufferSizeInFrames(mAudioStream->getFramesPerBurst() * kBufferSizeInBursts);
-    if (result != Result::OK) {
+    int32_t burstSize = mAudioStream->getFramesPerBurst();
+    int32_t bufferSize = burstSize * kBufferSizeInBursts;
+    LOGD("burstSize: %d bufferSize: %d", burstSize, bufferSize);
+    auto resultBufferSize = mAudioStream->setBufferSizeInFrames(bufferSize);
+    if (resultBufferSize != Result::OK) {
         __android_log_print(
                 ANDROID_LOG_WARN,
                 TAG,
                 "setBufferSizeInFrames failed. Error: %s", convertToText(result));
+    }else {
+        LOGD("Neue Buffersize ist jetzt: %d frames", resultBufferSize.value());
     }
 
     mSampleRate = mAudioStream->getSampleRate();

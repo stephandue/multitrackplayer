@@ -16,7 +16,7 @@ import com.stephanduechtel.fiveloop.ExoPlayerManager
 import kotlinx.coroutines.*
 import java.io.IOException
 
-class PlayerViewModel(application: Application): AndroidViewModel(application) {
+class PlayerViewModel(application: Application) : AndroidViewModel(application) {
 
     val TAG: String = "DrumPlayer"
 
@@ -27,6 +27,7 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
     var player5Volume by mutableStateOf(1f)
 
     private var job: Job? = null
+    var logFrames = false
 
     init {
         println("init PlayerViewModel")
@@ -47,12 +48,15 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
 
     private fun startSampleIndexLogging() {
         job = CoroutineScope(Dispatchers.IO).launch {
-            while (isActive) {
-                if (isSampleSourcePlaying(0)) {
-                    val timeInSconds = getCurrentTimeInSeconds(0)
-                    Log.d(TAG, "Current Time In Seconds: $timeInSconds")
+
+            if (logFrames) {
+                while (isActive) {
+                    if (isSampleSourcePlaying(0)) {
+                        val timeInSconds = getCurrentTimeInSeconds(0)
+                        Log.d(TAG, "Current Time In Seconds: $timeInSconds")
+                    }
+                    delay(50)
                 }
-                delay(50)
             }
         }
     }

@@ -30,32 +30,29 @@ void OneShotSampleSource::mixAudio(float* outBuff, int numChannels, int32_t numF
     int32_t numWriteFrames = mIsPlaying
                          ? std::min(numFrames, samplesLeft / sampleChannels)
                          : 0;
-    //LOGD("numSamples: %d, sampleChannels: %d, samplesLeft: %d, numWriteFrames: %d", numSamples, sampleChannels, samplesLeft, numWriteFrames);
+    LOGD("numSamples: %d, sampleChannels: %d, samplesLeft: %d, numWriteFrames: %d deadline: %f ms", numSamples, sampleChannels, samplesLeft, numWriteFrames, numWriteFrames / 44.1);
 
     if (numWriteFrames != 0) {
         const float* data  = mSampleBuffer->getSampleData();
 
         // Buffer to hold processed samples
-        std::vector<float> processedSamples(numWriteFrames * sampleChannels);
+//        std::vector<float> processedSamples(numWriteFrames * sampleChannels);
 
-        // Feed the required number of samples to SoundTouch
-        mSoundTouch.putSamples(data + mCurSampleIndex, numWriteFrames);
+//        // Feed the required number of samples to SoundTouch
+//        mSoundTouch.putSamples(data + mCurSampleIndex, numWriteFrames);
+//
+//        // Calculate the actual number of processed frames
+//        mSoundTouch.receiveSamples(processedSamples.data(), numWriteFrames);
 
-        // Calculate the actual number of processed frames
-        mSoundTouch.receiveSamples(processedSamples.data(), numWriteFrames);
-
-        LOGD("sampleChannels: %d", sampleChannels);
-        LOGD("numChannels: %d", numChannels);
-        LOGD("numWriteFrames: %d", numWriteFrames);
 
         int dstSampleIndex = 0;
         for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++) {
-            outBuff[dstSampleIndex++] += processedSamples[frameIndex * 2] * mLeftGain;
-            outBuff[dstSampleIndex++] += processedSamples[frameIndex * 2 + 1] * mRightGain;
-//            outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mLeftGain;
-//            outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mRightGain;
+          //  outBuff[dstSampleIndex++] += processedSamples[frameIndex * 2] * mLeftGain;
+       //     outBuff[dstSampleIndex++] += processedSamples[frameIndex * 2 + 1] * mRightGain;
+            outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mLeftGain;
+            outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mRightGain;
         }
-        mCurSampleIndex += numWriteFrames * sampleChannels;
+       // mCurSampleIndex += numWriteFrames * sampleChannels;
         if (mCurSampleIndex >= numSamples) {
             mIsPlaying = false;
         }
