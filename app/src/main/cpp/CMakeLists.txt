@@ -55,6 +55,8 @@ set (APP_SOURCES
         DrumPlayerJNI.cpp
         )
 
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Ofast") #recommended here: https://medium.com/@donturner/debugging-audio-glitches-on-android-ed10782f9c64
+
 # Build the drumthumper (native) library
 add_library(drumthumper SHARED
         ${APP_SOURCES}

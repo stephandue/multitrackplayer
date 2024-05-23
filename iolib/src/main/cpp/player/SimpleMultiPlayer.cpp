@@ -107,7 +107,7 @@ bool SimpleMultiPlayer::openStream() {
     builder.setErrorCallback(mErrorCallback);
     builder.setPerformanceMode(PerformanceMode::PowerSaving);
     builder.setSharingMode(SharingMode::Exclusive);
-//    builder.setFramesPerCallback(24);
+    builder.setFramesPerCallback(480);
     builder.setSampleRateConversionQuality(SampleRateConversionQuality::Medium);
 
     Result result = builder.openStream(mAudioStream);
@@ -117,6 +117,9 @@ bool SimpleMultiPlayer::openStream() {
                 TAG,
                 "openStream failed. Error: %s", convertToText(result));
         return false;
+    } else {
+        int32_t framesPerCallback = mAudioStream->getFramesPerCallback();
+        LOGD("Default FramesPerCallback: %d", framesPerCallback);
     }
 
     // Reduce stream latency by setting the buffer size to a multiple of the burst size
@@ -139,9 +142,9 @@ bool SimpleMultiPlayer::openStream() {
     LOGD("mAudioStream->getSampleRate(): %d", mAudioStream->getSampleRate());
     mSoundTouch.setSampleRate(mAudioStream->getSampleRate());
     mSoundTouch.setChannels(mAudioStream->getChannelCount());
-//        mSoundTouch.setPitch(1/0.7f);
+//    mSoundTouch.setPitch(1/0.7f);
     mSoundTouch.setTempo(0.7f); // changing the tempo in any way makes audio crack and delays start/stop times
-//        mSoundTouch.setTempo(1.0f);
+//    mSoundTouch.setTempo(1.0f);
 
     return true;
 }
