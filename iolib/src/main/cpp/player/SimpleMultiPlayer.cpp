@@ -107,6 +107,7 @@ bool SimpleMultiPlayer::openStream() {
     builder.setErrorCallback(mErrorCallback);
     builder.setPerformanceMode(PerformanceMode::PowerSaving);
     builder.setSharingMode(SharingMode::Exclusive);
+    builder.setBufferCapacityInFrames(32768);
     builder.setFramesPerCallback(480);
     builder.setSampleRateConversionQuality(SampleRateConversionQuality::Medium);
 
@@ -127,8 +128,8 @@ bool SimpleMultiPlayer::openStream() {
     // See oboe::AudioStreamBuffered::setBufferSizeInFrames
     LOGD("setFramesPerBurst(): %d", mAudioStream->getFramesPerBurst());
     LOGD("setBufferSizeInFrames: %d", mAudioStream->getFramesPerBurst() * kBufferSizeInBursts);
-    result = mAudioStream->setBufferSizeInFrames(mAudioStream->getFramesPerBurst() * kBufferSizeInBursts);
-//    result = mAudioStream->setBufferSizeInFrames(16384);
+//    result = mAudioStream->setBufferSizeInFrames(mAudioStream->getFramesPerBurst() * kBufferSizeInBursts);
+    result = mAudioStream->setBufferSizeInFrames(32768);
     if (result != Result::OK) {
         __android_log_print(
                 ANDROID_LOG_WARN,

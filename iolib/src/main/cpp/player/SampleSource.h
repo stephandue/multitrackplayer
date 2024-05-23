@@ -52,9 +52,9 @@ public:
     //void setPlayMode() { mCurSampleIndex = 0; mIsPlaying = true; }
     void setPlayMode(int32_t sampleIndex) {
         // Ensure that the sample index is within the valid range.
-        if (sampleIndex < 0) {
-            sampleIndex = 0;
-        }
+//        if (sampleIndex < 0) {
+//            sampleIndex = 0;
+//        }
         // Set the current sample index and playback flag.
         mIsPlaying = true;
     }
