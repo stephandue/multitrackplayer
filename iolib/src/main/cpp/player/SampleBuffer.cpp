@@ -21,6 +21,10 @@
 
 #include "wav/WavStreamReader.h"
 
+#include <android/log.h>
+#define LOG_TAG "SampleSource"
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+
 using namespace RESAMPLER_OUTER_NAMESPACE::resampler;
 
 namespace iolib {

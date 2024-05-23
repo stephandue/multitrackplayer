@@ -24,6 +24,8 @@
 #include "OneShotSampleSource.h"
 #include "SimpleMultiPlayer.h"
 
+#include <SoundTouch.h>
+
 static const char* TAG = "SimpleMultiPlayer";
 
 using namespace oboe;
@@ -41,15 +43,10 @@ DataCallbackResult SimpleMultiPlayer::MyDataCallback::onAudioReady(AudioStream *
                                                                    void *audioData,
                                                                    int32_t numFrames) {
 
-    static bool isPrioritySet = false;
-    if (!isPrioritySet) {
-        // Set the thread priority
-        pthread_t this_thread = pthread_self();
-        struct sched_param schedParam;
-        schedParam.sched_priority = sched_get_priority_max(SCHED_FIFO);
-        pthread_setschedparam(this_thread, SCHED_FIFO, &schedParam);
-        isPrioritySet = true;
-    }
+    LOGD("oboeStream->getXRunCount(): %d", oboeStream->getXRunCount());
+    LOGD("oboeStream->getBufferSizeInFrames(): %d", oboeStream->getBufferSizeInFrames());
+    LOGD("oboeStream->getFramesPerCallback(): %d", oboeStream->getFramesPerCallback());
+
 
     StreamState streamState = oboeStream->getState();
     if (streamState != StreamState::Open && streamState != StreamState::Started) {
@@ -70,6 +67,18 @@ DataCallbackResult SimpleMultiPlayer::MyDataCallback::onAudioReady(AudioStream *
                                                      numFrames);
         }
     }
+
+    if (mParent->mSampleSources[0]->isPlaying()) {
+        // Process the mixed audio data with SoundTouch
+        float *floatAudioData = static_cast<float*>(audioData);
+
+        // Feed the mixed audio data into SoundTouch
+        mParent->mSoundTouch.putSamples(floatAudioData, numFrames);
+
+        // Retrieve processed samples from SoundTouch
+        mParent->mSoundTouch.receiveSamples(floatAudioData, numFrames);
+    }
+
 
     return DataCallbackResult::Continue;
 }
@@ -98,7 +107,7 @@ bool SimpleMultiPlayer::openStream() {
     builder.setErrorCallback(mErrorCallback);
     builder.setPerformanceMode(PerformanceMode::PowerSaving);
     builder.setSharingMode(SharingMode::Exclusive);
-    //builder.setFramesPerCallback(480);
+//    builder.setFramesPerCallback(24);
     builder.setSampleRateConversionQuality(SampleRateConversionQuality::Medium);
 
     Result result = builder.openStream(mAudioStream);
@@ -116,6 +125,7 @@ bool SimpleMultiPlayer::openStream() {
     LOGD("setFramesPerBurst(): %d", mAudioStream->getFramesPerBurst());
     LOGD("setBufferSizeInFrames: %d", mAudioStream->getFramesPerBurst() * kBufferSizeInBursts);
     result = mAudioStream->setBufferSizeInFrames(mAudioStream->getFramesPerBurst() * kBufferSizeInBursts);
+//    result = mAudioStream->setBufferSizeInFrames(16384);
     if (result != Result::OK) {
         __android_log_print(
                 ANDROID_LOG_WARN,
@@ -124,6 +134,14 @@ bool SimpleMultiPlayer::openStream() {
     }
 
     mSampleRate = mAudioStream->getSampleRate();
+
+    // Init SoundTouch
+    LOGD("mAudioStream->getSampleRate(): %d", mAudioStream->getSampleRate());
+    mSoundTouch.setSampleRate(mAudioStream->getSampleRate());
+    mSoundTouch.setChannels(mAudioStream->getChannelCount());
+//        mSoundTouch.setPitch(1/0.7f);
+    mSoundTouch.setTempo(0.7f); // changing the tempo in any way makes audio crack and delays start/stop times
+//        mSoundTouch.setTempo(1.0f);
 
     return true;
 }
@@ -206,6 +224,7 @@ void SimpleMultiPlayer::triggerDown(int32_t index) {
 void SimpleMultiPlayer::triggerUp(int32_t index) {
     if (index < mNumSampleBuffers) {
         mSampleSources[index]->setStopMode();
+        mSoundTouch.clear();
     }
 }
 

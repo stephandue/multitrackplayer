@@ -35,27 +35,34 @@ void OneShotSampleSource::mixAudio(float* outBuff, int numChannels, int32_t numF
     if (numWriteFrames != 0) {
         const float* data  = mSampleBuffer->getSampleData();
 
-        // Buffer to hold processed samples
-        std::vector<float> processedSamples(numWriteFrames * sampleChannels);
+//        // Buffer to hold processed samples
+//        std::vector<float> processedSamples(numWriteFrames * sampleChannels);
+//
+//        // Feed the required number of samples to SoundTouch
+//        mSoundTouch.putSamples(data + mCurSampleIndex, numWriteFrames);
+//
+//        // Calculate the actual number of processed frames
+//        mSoundTouch.receiveSamples(processedSamples.data(), numWriteFrames);
 
-        // Feed the required number of samples to SoundTouch
-        mSoundTouch.putSamples(data + mCurSampleIndex, numWriteFrames);
+//        LOGD("sampleChannels: %d", sampleChannels);
+//        LOGD("numChannels: %d", numChannels);
+//        LOGD("numWriteFrames: %d", numWriteFrames);
 
-        // Calculate the actual number of processed frames
-        mSoundTouch.receiveSamples(processedSamples.data(), numWriteFrames);
-
-        LOGD("sampleChannels: %d", sampleChannels);
-        LOGD("numChannels: %d", numChannels);
-        LOGD("numWriteFrames: %d", numWriteFrames);
+//        mCurSampleIndex2 = mCurSampleIndex;
 
         int dstSampleIndex = 0;
         for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++) {
-            outBuff[dstSampleIndex++] += processedSamples[frameIndex * 2] * mLeftGain;
-            outBuff[dstSampleIndex++] += processedSamples[frameIndex * 2 + 1] * mRightGain;
-//            outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mLeftGain;
-//            outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mRightGain;
+//            outBuff[dstSampleIndex++] += processedSamples[frameIndex * 2] * mLeftGain;
+//            outBuff[dstSampleIndex++] += processedSamples[frameIndex * 2 + 1] * mRightGain;
+            outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mLeftGain;
+            outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mRightGain;
+//            mCurSampleIndex2++;
+//            mCurSampleIndex2++;
         }
-        mCurSampleIndex += numWriteFrames * sampleChannels;
+//        mCurSampleIndex += numWriteFrames * sampleChannels;
+//        LOGD("numSamples: %d", numSamples);
+//        LOGD("mCurSampleIndex: %d", mCurSampleIndex);
+//        LOGD("mCurSampleIndex2: %d", mCurSampleIndex2);
         if (mCurSampleIndex >= numSamples) {
             mIsPlaying = false;
         }

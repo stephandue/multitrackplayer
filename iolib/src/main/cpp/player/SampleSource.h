@@ -24,8 +24,6 @@
 
 #include "SampleBuffer.h"
 
-#include <SoundTouch.h>
-//#include <../rubberband/RubberBandStretcher.h>
 
 #define LOG_TAG "SampleSource"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
@@ -48,12 +46,6 @@ public:
     SampleSource(SampleBuffer *sampleBuffer, float pan)
      : mSampleBuffer(sampleBuffer), mCurSampleIndex(0), mIsPlaying(false), mGain(1.0f) {
         setPan(pan);
-        LOGD("mSampleBuffer->getSampleRate(): %d", mSampleBuffer->getSampleRate());
-        mSoundTouch.setSampleRate(mSampleBuffer->getSampleRate());
-        mSoundTouch.setChannels(mSampleBuffer->getChannelCount());
-        //mSoundTouch.setPitch(0.8f);
-        mSoundTouch.setTempo(0.7f); // changing the tempo in any way makes audio crack and delays start/stop times
-        //mSoundTouch.setTempo(1.0f);
     }
     virtual ~SampleSource() {}
 
@@ -116,6 +108,7 @@ protected:
     SampleBuffer    *mSampleBuffer;
 
     int32_t mCurSampleIndex;
+    int32_t mCurSampleIndex2;
 
     bool mIsPlaying;
 
@@ -129,9 +122,6 @@ protected:
     // Overall gain
     float mGain;
 
-    //float mSpeed;
-    soundtouch::SoundTouch mSoundTouch;
-    //RubberBand::RubberBandStretcher mRubberBandStretcher;
 
 private:
     void calcGainFactors() {
