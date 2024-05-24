@@ -235,7 +235,8 @@ void SimpleMultiPlayer::triggerDown(int32_t index) {
             int32_t sampleIndex = mSampleSources[i]->getCurrentSampleIndex();; // mSampleSources[i]->getCurrentSampleIndex(); //mSampleRate * 10;
             mSampleSources[i]->setPlayMode(sampleIndex);
         }
-//        fadeGain(1.0f, 500);
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        fadeGain(1.0f, 180);
     }).detach();
 }
 
@@ -245,8 +246,8 @@ void SimpleMultiPlayer::triggerUp(int32_t index) {
         LOGD("stop gain: %f", getGain(i));
     }
     std::thread([this]() {
-//        fadeGain(0.0f, 500);
-//        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        fadeGain(0.0f, 180);
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
         for (int32_t i = 0; i < mNumSampleBuffers; ++i) {
             mSampleSources[i]->setStopMode();
         }
@@ -260,7 +261,7 @@ void SimpleMultiPlayer::triggerUp(int32_t index) {
         mFadeDurationMs.store(durationMs);
 
         std::thread([this, targetGain]() {
-            int steps = 25;
+            int steps = 300;
             int stepDuration = mFadeDurationMs.load() / steps;
             std::vector<float> initialGains(mNumSampleBuffers);
 
