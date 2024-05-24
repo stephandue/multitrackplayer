@@ -58,7 +58,7 @@ public:
         // Set the current sample index and playback flag.
         mIsPlaying = true;
     }
-    void setStopMode() { mIsPlaying = false; mCurSampleIndex = 0; }
+    void setStopMode() { mIsPlaying = false; }
 
     bool isPlaying() { return mIsPlaying; }
 
