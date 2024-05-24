@@ -75,6 +75,15 @@ public:
     float getCurrentTimeInSeconds(int index);
     float getTotalLengthInSeconds(int index);
 
+    float mCurrentTempo;
+    float mCurrentPitch;
+
+    void setTempo(float tempo);
+    void setPitchSemiTones(float pitch);
+
+    float getTempo() const;
+    float getPitchSemiTones() const;
+
     soundtouch::SoundTouch mSoundTouch;
 
 // Sample Data

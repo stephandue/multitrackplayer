@@ -180,6 +180,30 @@ JNIEXPORT jboolean JNICALL Java_com_stephanduechtel_multitrackplayer_PlayerViewM
     return JNI_FALSE;
 }
 
+// JNI method to set the tempo
+JNIEXPORT void JNICALL Java_com_stephanduechtel_multitrackplayer_PlayerViewModel_setTempoNative(
+        JNIEnv* env, jobject, jfloat tempo) {
+    sDTPlayer.setTempo(tempo);
+}
+
+// JNI method to set the pitch
+JNIEXPORT void JNICALL Java_com_stephanduechtel_multitrackplayer_PlayerViewModel_setPitchSemiTonesNative(
+        JNIEnv* env, jobject, jfloat pitch) {
+    sDTPlayer.setPitchSemiTones(pitch);
+}
+
+// JNI method to get the current tempo
+JNIEXPORT jfloat JNICALL Java_com_stephanduechtel_multitrackplayer_PlayerViewModel_getTempoNative(
+        JNIEnv* env, jobject) {
+    return sDTPlayer.getTempo();
+}
+
+// JNI method to get the current pitch
+JNIEXPORT jfloat JNICALL Java_com_stephanduechtel_multitrackplayer_PlayerViewModel_getPitchSemiTonesNative(
+        JNIEnv* env, jobject) {
+    return sDTPlayer.getPitchSemiTones();
+}
+
 #ifdef __cplusplus
 }
 #endif

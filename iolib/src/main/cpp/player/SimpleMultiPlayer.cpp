@@ -33,7 +33,7 @@ using namespace parselib;
 
 namespace iolib {
 
-constexpr int32_t kBufferSizeInBursts = 2048; // Use 2 bursts as the buffer size (double buffer)
+constexpr int32_t kBufferSizeInBursts = 2048; //32; // Use 2 bursts as the buffer size (double buffer)
 
 SimpleMultiPlayer::SimpleMultiPlayer()
   : mChannelCount(0), mOutputReset(false), mSampleRate(0), mNumSampleBuffers(0)
@@ -149,7 +149,8 @@ bool SimpleMultiPlayer::openStream() {
     mSoundTouch.setSampleRate(mAudioStream->getSampleRate());
     mSoundTouch.setChannels(mAudioStream->getChannelCount());
 //    mSoundTouch.setPitch(1/0.7f);
-    mSoundTouch.setTempo(0.7f); // changing the tempo in any way makes audio crack and delays start/stop times
+    mSoundTouch.setTempo(1.0f); // changing the tempo in any way makes audio crack and delays start/stop times
+    mSoundTouch.setPitchSemiTones(0.0);
 //    mSoundTouch.setTempo(1.0f);
 
     return true;
@@ -274,6 +275,26 @@ float SimpleMultiPlayer::getCurrentTimeInSeconds(int index) {
     }
     return totalLength;
 }*/
+
+    void SimpleMultiPlayer::setTempo(float tempo) {
+        mCurrentTempo = tempo;
+        mSoundTouch.setTempo(tempo);
+        __android_log_print(ANDROID_LOG_INFO, TAG, "Tempo set to: %f", tempo);
+    }
+
+    void SimpleMultiPlayer::setPitchSemiTones(float pitch) {
+        mCurrentPitch = pitch;
+        mSoundTouch.setPitchSemiTones(pitch);
+        __android_log_print(ANDROID_LOG_INFO, TAG, "Pitch set to: %f", pitch);
+    }
+
+    float SimpleMultiPlayer::getTempo() const {
+        return mCurrentTempo;
+    }
+
+    float SimpleMultiPlayer::getPitchSemiTones() const {
+        return mCurrentPitch;
+    }
 
 
 }

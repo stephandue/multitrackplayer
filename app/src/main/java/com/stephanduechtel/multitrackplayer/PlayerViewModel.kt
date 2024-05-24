@@ -1,7 +1,6 @@
 package com.stephanduechtel.multitrackplayer
 
 import android.app.Application
-import android.content.Context
 import android.content.res.AssetManager
 import android.util.Log
 import androidx.annotation.OptIn
@@ -12,8 +11,12 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.util.UnstableApi
-import com.stephanduechtel.fiveloop.ExoPlayerManager
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import java.io.IOException
 
 class PlayerViewModel(application: Application): AndroidViewModel(application) {
@@ -25,6 +28,9 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
     var player3Volume by mutableStateOf(1f)
     var player4Volume by mutableStateOf(1f)
     var player5Volume by mutableStateOf(1f)
+
+    private var currentTempo: Float = 1.0f
+    private var currentPitch: Float = 0.0f
 
     private var job: Job? = null
 
@@ -163,6 +169,34 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
         }
     }*/
 
+    // Function to decrease the tempo by 0.1
+    fun tempoDown() {
+        currentTempo -= 0.05f
+        // Call native method to update tempo
+        setTempoNative(currentTempo)
+    }
+
+    // Function to increase the tempo by 0.1
+    fun tempoUp() {
+        currentTempo += 0.05f
+        // Call native method to update tempo
+        setTempoNative(currentTempo)
+    }
+
+    // Function to decrease the pitch by one halftone (1.0)
+    fun pitchDown() {
+        currentPitch -= 1.0f
+        // Call native method to update pitch
+        setPitchSemiTonesNative(currentPitch)
+    }
+
+    // Function to increase the pitch by one halftone (1.0)
+    fun pitchUp() {
+        currentPitch += 1.0f
+        // Call native method to update pitch
+        setPitchSemiTonesNative(currentPitch)
+    }
+
     fun isSamplePlaying(index: Int): Boolean {
         return isSampleSourcePlaying(index)
     }
@@ -192,6 +226,10 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
     external fun restartStream()
 
     external fun isSampleSourcePlaying(index: Int): Boolean
+    external fun setTempoNative(tempo: Float)
+    external fun setPitchSemiTonesNative(pitch: Float)
+    external fun getTempoNative(): Float
+    external fun getPitchSemiTonesNative(): Float
 
 }
 

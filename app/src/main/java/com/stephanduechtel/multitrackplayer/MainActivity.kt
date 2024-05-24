@@ -26,6 +26,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Slider
 import androidx.compose.material.Text
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.PlayArrow
@@ -102,17 +103,17 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
                         )
                         // Add 3 more sliders as placeholders for future controls
                         VolumeSlider(
-                            label = "Fader 3",
+                            label = "Player 3",
                             volume = viewModel.player3Volume,
                             onVolumeChange = { viewModel.updatePlayer3Volume(it) }
                         )
                         VolumeSlider(
-                            label = "Fader 4",
+                            label = "Player 4",
                             volume = viewModel.player4Volume,
                             onVolumeChange = { viewModel.updatePlayer4Volume(it) }
                         )
                         VolumeSlider(
-                            label = "Fader 5",
+                            label = "Player 5",
                             volume = viewModel.player5Volume,
                             onVolumeChange = { viewModel.updatePlayer5Volume(it) }
                         )
@@ -135,8 +136,11 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(icon = Icons.Default.KeyboardArrowLeft, onClick = { viewModel.setPausedPositionToZero() })
-                        IconButton(icon = Icons.Default.PlayArrow, onClick = { viewModel.playPause() })
+                        TextButton(label = "Tempo Down", onClick = { viewModel.tempoDown() })
+                        TextButton(label = "Tempo Up", onClick = { viewModel.tempoUp() })
+                        TextButton(label = "Play/Pause", onClick = { viewModel.playPause() })
+                        TextButton(label = "Pitch Down", onClick = { viewModel.pitchDown() })
+                        TextButton(label = "Pitch Up", onClick = { viewModel.pitchUp() })
                     }
                 }
             }
@@ -159,7 +163,7 @@ fun VolumeSlider(label: String, volume: Float, onVolumeChange: (Float) -> Unit) 
 }
 
 @Composable
-fun IconButton(icon: ImageVector, onClick: () -> Unit) {
+fun TextButton(label: String, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         shape = CircleShape, // Make the button circular
@@ -170,12 +174,19 @@ fun IconButton(icon: ImageVector, onClick: () -> Unit) {
             .width(60.dp)
             .height(60.dp)
     ) {
-        Icon(
-            icon,
-            contentDescription = null, // Decorative icon doesn't require a content description
-            tint = Color.White, // Icon color
-            modifier = Modifier.fillMaxSize(0.5F)
-        )
+        Box(
+            contentAlignment = Alignment.Center, // Center the content inside the box
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Text(
+                text = label,
+                color = Color.White, // Text color
+                textAlign = TextAlign.Center, // Center the text if it wraps to multiple lines
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.Center) // Center the text inside the box
+            )
+        }
     }
 }
 
