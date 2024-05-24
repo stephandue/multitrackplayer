@@ -43,9 +43,14 @@ DataCallbackResult SimpleMultiPlayer::MyDataCallback::onAudioReady(AudioStream *
                                                                    void *audioData,
                                                                    int32_t numFrames) {
 
-    LOGD("oboeStream->getXRunCount(): %d", oboeStream->getXRunCount());
-    LOGD("oboeStream->getBufferSizeInFrames(): %d", oboeStream->getBufferSizeInFrames());
-    LOGD("oboeStream->getFramesPerCallback(): %d", oboeStream->getFramesPerCallback());
+    auto result = oboeStream->getXRunCount();
+    if (result) { // Check if the result is successful
+        int32_t currentXRunCount = result.value();
+        if (currentXRunCount != mPreviousXRunCount) {
+            LOGD("oboeStream->getXRunCount(): %d", currentXRunCount);
+            mPreviousXRunCount = currentXRunCount;
+        }
+    }
 
 
     StreamState streamState = oboeStream->getState();

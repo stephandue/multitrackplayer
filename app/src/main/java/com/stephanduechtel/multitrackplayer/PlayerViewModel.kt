@@ -50,7 +50,7 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
             while (isActive) {
                 if (isSampleSourcePlaying(0)) {
                     val timeInSconds = getCurrentTimeInSeconds(0)
-                    Log.d(TAG, "Current Time In Seconds: $timeInSconds")
+//                    Log.d(TAG, "Current Time In Seconds: $timeInSconds")
                 }
                 delay(50)
             }

@@ -83,7 +83,7 @@ int32_t mNumSampleBuffers;
 private:
     class MyDataCallback : public oboe::AudioStreamDataCallback {
     public:
-        MyDataCallback(SimpleMultiPlayer *parent) : mParent(parent) {}
+        MyDataCallback(SimpleMultiPlayer *parent) : mParent(parent), mPreviousXRunCount(0) {}
 
         oboe::DataCallbackResult onAudioReady(
                 oboe::AudioStream *audioStream,
@@ -92,6 +92,7 @@ private:
 
     private:
         SimpleMultiPlayer *mParent;
+        int32_t mPreviousXRunCount;
     };
 
     class MyErrorCallback : public oboe::AudioStreamErrorCallback {
