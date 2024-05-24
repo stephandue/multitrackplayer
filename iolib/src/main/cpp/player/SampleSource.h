@@ -56,6 +56,7 @@ public:
 //            sampleIndex = 0;
 //        }
         // Set the current sample index and playback flag.
+        mCurSampleIndex = sampleIndex;
         mIsPlaying = true;
     }
     void setStopMode() { mIsPlaying = false; }

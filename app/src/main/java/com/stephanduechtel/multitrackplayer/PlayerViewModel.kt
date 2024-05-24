@@ -75,14 +75,14 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
         }*/
         if (isSamplePlaying(0)) {
             stopTrigger(0)
-            stopTrigger(1)
-            stopTrigger(2)
-            stopTrigger(3)
+//            stopTrigger(1)
+//            stopTrigger(2)
+//            stopTrigger(3)
         } else {
             trigger(0)
-            trigger(1)
-            trigger(2)
-            trigger(3)
+//            trigger(1)
+//            trigger(2)
+//            trigger(3)
         }
 
     }

@@ -26,6 +26,11 @@
 
 #include <SoundTouch.h>
 
+#include <atomic>
+#include <vector>
+#include <thread>
+#include <chrono>
+
 static const char* TAG = "SimpleMultiPlayer";
 
 using namespace oboe;
@@ -76,14 +81,13 @@ DataCallbackResult SimpleMultiPlayer::MyDataCallback::onAudioReady(AudioStream *
     if (mParent->mSampleSources[0]->isPlaying()) {
         // Process the mixed audio data with SoundTouch
         float *floatAudioData = static_cast<float*>(audioData);
-
         // Feed the mixed audio data into SoundTouch
         mParent->mSoundTouch.putSamples(floatAudioData, numFrames);
-
+        // Clear the buffer to ensure no residual data is present
+        memset(floatAudioData, 0, numFrames * mParent->mChannelCount * sizeof(float));
         // Retrieve processed samples from SoundTouch
         mParent->mSoundTouch.receiveSamples(floatAudioData, numFrames);
     }
-
 
     return DataCallbackResult::Continue;
 }
@@ -133,8 +137,8 @@ bool SimpleMultiPlayer::openStream() {
     // See oboe::AudioStreamBuffered::setBufferSizeInFrames
     LOGD("setFramesPerBurst(): %d", mAudioStream->getFramesPerBurst());
     LOGD("setBufferSizeInFrames: %d", mAudioStream->getFramesPerBurst() * kBufferSizeInBursts);
-//    result = mAudioStream->setBufferSizeInFrames(mAudioStream->getFramesPerBurst() * kBufferSizeInBursts);
-    result = mAudioStream->setBufferSizeInFrames(32768);
+    result = mAudioStream->setBufferSizeInFrames(mAudioStream->getFramesPerBurst() * kBufferSizeInBursts);
+//    result = mAudioStream->setBufferSizeInFrames(32768);
     if (result != Result::OK) {
         __android_log_print(
                 ANDROID_LOG_WARN,
@@ -225,18 +229,61 @@ void SimpleMultiPlayer::unloadSampleData() {
 }
 
 void SimpleMultiPlayer::triggerDown(int32_t index) {
-    if (index < mNumSampleBuffers) {
-        int32_t sampleIndex = mSampleRate * 0;
-        mSampleSources[index]->setPlayMode(sampleIndex);
-    }
+    std::thread([this, index]() {
+        for (int32_t i = 0; i < mNumSampleBuffers; ++i) {
+            LOGD("start gain: %f", getGain(i));
+            int32_t sampleIndex = mSampleSources[i]->getCurrentSampleIndex();; // mSampleSources[i]->getCurrentSampleIndex(); //mSampleRate * 10;
+            mSampleSources[i]->setPlayMode(sampleIndex);
+        }
+//        fadeGain(1.0f, 500);
+    }).detach();
 }
 
 void SimpleMultiPlayer::triggerUp(int32_t index) {
-    if (index < mNumSampleBuffers) {
-        mSampleSources[index]->setStopMode();
-        mSoundTouch.clear();
+    LOGD("triggerUp");
+    for (int32_t i = 0; i < mNumSampleBuffers; ++i) {
+        LOGD("stop gain: %f", getGain(i));
     }
+    std::thread([this]() {
+//        fadeGain(0.0f, 500);
+//        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        for (int32_t i = 0; i < mNumSampleBuffers; ++i) {
+            mSampleSources[i]->setStopMode();
+        }
+        mSoundTouch.clear();
+    }).detach();
+
 }
+
+    void SimpleMultiPlayer::fadeGain(float targetGain, int durationMs) {
+        mFading.store(true);
+        mFadeDurationMs.store(durationMs);
+
+        std::thread([this, targetGain]() {
+            int steps = 25;
+            int stepDuration = mFadeDurationMs.load() / steps;
+            std::vector<float> initialGains(mNumSampleBuffers);
+
+            for (int i = 0; i < mNumSampleBuffers; ++i) {
+                initialGains[i] = getGain(i);
+            }
+
+            for (int step = 0; step < steps; ++step) {
+                float progress = static_cast<float>(step) / steps;
+                for (int i = 0; i < mNumSampleBuffers; ++i) {
+                    float newGain = initialGains[i] + progress * (targetGain - initialGains[i]);
+                    setGain(i, newGain);
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(stepDuration));
+            }
+
+            for (int i = 0; i < mNumSampleBuffers; ++i) {
+                setGain(i, targetGain);
+            }
+            mFading.store(false);
+        }).detach();
+    }
+
 
 void SimpleMultiPlayer::resetAll() {
     for (int32_t bufferIndex = 0; bufferIndex < mNumSampleBuffers; bufferIndex++) {

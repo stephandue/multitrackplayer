@@ -84,6 +84,11 @@ public:
     float getTempo() const;
     float getPitchSemiTones() const;
 
+    std::atomic<bool> mFading{false};
+    std::atomic<int> mFadeDurationMs{500};
+
+    void fadeGain(float targetGain, int durationMs);
+
     soundtouch::SoundTouch mSoundTouch;
 
 // Sample Data
