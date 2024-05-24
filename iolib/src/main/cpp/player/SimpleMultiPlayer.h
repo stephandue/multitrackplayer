@@ -25,6 +25,8 @@
 #include "OneShotSampleSource.h"
 #include "SampleBuffer.h"
 
+#include <SoundTouch.h>
+
 namespace iolib {
 
 /**
@@ -72,6 +74,8 @@ public:
     int32_t getCurrentSampleIndex(int index);
     float getCurrentTimeInSeconds(int index);
     float getTotalLengthInSeconds(int index);
+
+    soundtouch::SoundTouch mSoundTouch;
 
 // Sample Data
 int32_t mNumSampleBuffers;
