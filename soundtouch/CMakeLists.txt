@@ -43,6 +43,7 @@ target_include_directories(SoundTouch PUBLIC
 
 target_compile_definitions(SoundTouch PRIVATE ${COMPILE_DEFINITIONS})
 target_compile_options(SoundTouch PRIVATE ${COMPILE_OPTIONS})
+target_compile_options(SoundTouch PRIVATE -Wall -Werror -Ofast)
 
 if(BUILD_SHARED_LIBS)
   set_target_properties(SoundTouch PROPERTIES
