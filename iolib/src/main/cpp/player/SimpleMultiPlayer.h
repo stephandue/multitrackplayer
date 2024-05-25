@@ -36,7 +36,7 @@ class SimpleMultiPlayer  {
 public:
     SimpleMultiPlayer();
 
-    void setupAudioStream(int32_t channelCount);
+    void setupAudioStream(int32_t channelCount, int32_t audioSessionId);
     void teardownAudioStream();
 
     bool openStream();
@@ -89,6 +89,8 @@ public:
     std::atomic<int> mFadeDurationMs{500};
 
     void fadeGain(float targetGain, int durationMs);
+
+    int32_t mAudioSessionId;
 
     soundtouch::SoundTouch mSoundTouch;
 

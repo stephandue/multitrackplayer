@@ -118,6 +118,8 @@ bool SimpleMultiPlayer::openStream() {
     builder.setSharingMode(SharingMode::Exclusive);
     builder.setBufferCapacityInFrames(32768);
     builder.setFramesPerCallback(480);
+    LOGD("setSessionId: %d", mAudioSessionId);
+    builder.setSessionId((oboe::SessionId) mAudioSessionId);
     builder.setSampleRateConversionQuality(SampleRateConversionQuality::Medium);
 
     Result result = builder.openStream(mAudioStream);
@@ -188,12 +190,13 @@ bool SimpleMultiPlayer::startStream() {
     return false;
 }
 
-void SimpleMultiPlayer::setupAudioStream(int32_t channelCount) {
-    __android_log_print(ANDROID_LOG_INFO, TAG, "setupAudioStream()");
-    mChannelCount = channelCount;
+    void SimpleMultiPlayer::setupAudioStream(int32_t channelCount, int32_t audioSessionId) {
+        __android_log_print(ANDROID_LOG_INFO, TAG, "setupAudioStream() with audioSessionId: %d", audioSessionId);
+        mChannelCount = channelCount;
+        mAudioSessionId = audioSessionId;  // Store the audio session ID if needed
 
-    openStream();
-}
+        openStream();
+    }
 
 void SimpleMultiPlayer::teardownAudioStream() {
     __android_log_print(ANDROID_LOG_INFO, TAG, "teardownAudioStream()");

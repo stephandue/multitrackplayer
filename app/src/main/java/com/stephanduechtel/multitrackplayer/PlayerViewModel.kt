@@ -1,7 +1,11 @@
 package com.stephanduechtel.multitrackplayer
 
 import android.app.Application
+import android.content.Context
 import android.content.res.AssetManager
+import android.media.AudioManager
+import android.media.audiofx.BassBoost
+import android.media.audiofx.Equalizer
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.compose.runtime.getValue
@@ -19,6 +23,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.IOException
 
+
 class PlayerViewModel(application: Application): AndroidViewModel(application) {
 
     val TAG: String = "DrumPlayer"
@@ -33,13 +38,16 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
     private var currentPitch: Float = 0.0f
 
     private var job: Job? = null
+    private var audioSessionId: Int = 0
+    private var equalizer: Equalizer? = null
 
     init {
         println("init PlayerViewModel")
         //ExoPlayerManager.initialize(getApplication())
         //ExoPlayerManager.setMediaItem(getApplication())
         System.loadLibrary("drumthumper")
-        setupAudioStreamNative(2)
+        openAudioManager()
+        setupAudioStreamNative(2, audioSessionId)
         //loadWavAssets(getApplication())
         loadWavAssets(application.assets)
         startAudioStreamNative()
@@ -49,6 +57,30 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
     override fun onCleared() {
         super.onCleared()
         job?.cancel()
+        releaseAudioEffects()
+    }
+
+    fun openAudioManager() {
+        val audioManager = getApplication<Application>().getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioSessionId = audioManager.generateAudioSessionId()
+        Log.d(TAG, "Generated Audio Session ID: $audioSessionId")
+        applyAudioEffects()
+    }
+
+    private fun applyAudioEffects() {
+        equalizer = Equalizer(0, audioSessionId).apply {
+            enabled = false // set to true to enable the equalizer
+            val bandCount = numberOfBands
+            for (i in 0 until bandCount) {
+                val lowerBandLevel = getBandLevelRange()[0]
+                setBandLevel(i.toShort(), lowerBandLevel) // Set each band to its minimum value for a noticeable effect
+            }
+        }
+        Log.d(TAG, "Equalizer effect applied with all bands set to minimum")
+    }
+
+    private fun releaseAudioEffects() {
+        equalizer?.release()
     }
 
     private fun startSampleIndexLogging() {
@@ -201,7 +233,7 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
         return isSampleSourcePlaying(index)
     }
 
-    private external fun setupAudioStreamNative(numChannels: Int)
+    private external fun setupAudioStreamNative(numChannels: Int, audioSessionId: Int)
     private external fun startAudioStreamNative()
     private external fun teardownAudioStreamNative()
 
