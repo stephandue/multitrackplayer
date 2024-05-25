@@ -37,6 +37,8 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
     private var currentTempo: Float = 1.0f
     private var currentPitch: Float = 0.0f
 
+    val GAIN_FACTOR = 100.0f
+
     private var job: Job? = null
     private var audioSessionId: Int = 0
     private var equalizer: Equalizer? = null
@@ -83,6 +85,11 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
         equalizer?.release()
     }
 
+    private fun gainPosToGainVal(pos: Int) : Float {
+        // map 0 -> 200 to 0.0f -> 2.0f
+        return pos.toFloat() / GAIN_FACTOR
+    }
+
     private fun startSampleIndexLogging() {
         job = CoroutineScope(Dispatchers.IO).launch {
             while (isActive) {
@@ -107,11 +114,13 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
         }*/
         if (isSamplePlaying(0)) {
             stopTrigger(0)
+            // I only start one player here as the reference player, all the others will be started in SimpleMultiPlayer::triggerDown
 //            stopTrigger(1)
 //            stopTrigger(2)
 //            stopTrigger(3)
         } else {
             trigger(0)
+            // I only stop one player here as the reference player, all the others will be started in SimpleMultiPlayer::triggerUp
 //            trigger(1)
 //            trigger(2)
 //            trigger(3)
@@ -121,26 +130,31 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
 
     fun updatePlayer1Volume(volume: Float) {
         player1Volume = volume
+        setGain(0, volume)
         //ExoPlayerManager.setPlayerVolume(1, volume)
     }
 
     fun updatePlayer2Volume(volume: Float) {
         player2Volume = volume
+        setGain(1, volume)
         //ExoPlayerManager.setPlayerVolume(2, volume)
     }
 
     fun updatePlayer3Volume(volume: Float) {
         player3Volume = volume
+        setGain(2, volume)
         //ExoPlayerManager.setPlayerVolume(3, volume)
     }
 
     fun updatePlayer4Volume(volume: Float) {
         player4Volume = volume
+        setGain(3, volume)
         //ExoPlayerManager.setPlayerVolume(4, volume)
     }
 
     fun updatePlayer5Volume(volume: Float) {
         player5Volume = volume
+        setGain(4, volume)
         //ExoPlayerManager.setPlayerVolume(5, volume)
 
     }

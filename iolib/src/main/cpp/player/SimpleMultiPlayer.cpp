@@ -314,6 +314,16 @@ float SimpleMultiPlayer::getPan(int index) {
 }
 
 void SimpleMultiPlayer::setGain(int index, float gain) {
+    // Check if the index is within bounds
+    if (index < 0 || index >= mSampleSources.size()) {
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "Index out of bounds: %d", index);
+        return; // or handle the error appropriately
+    }
+    // Check if the element at the index is not null
+    if (mSampleSources[index] == nullptr) {
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "Sample source at index %d is null", index);
+        return; // or handle the error appropriately
+    }
     mSampleSources[index]->setGain(gain);
 }
 
@@ -341,14 +351,18 @@ float SimpleMultiPlayer::getCurrentTimeInSeconds(int index) {
         mCurrentTempo = tempo;
         mSoundTouch.setTempo(tempo);
         __android_log_print(ANDROID_LOG_INFO, TAG, "Tempo set to: %f", tempo);
-        triggerUpAndRightDown(0);
+        if (mSampleSources[0]->isPlaying()) {
+            triggerUpAndRightDown(0);
+        }
     }
 
     void SimpleMultiPlayer::setPitchSemiTones(float pitch) {
         mCurrentPitch = pitch;
         mSoundTouch.setPitchSemiTones(pitch);
         __android_log_print(ANDROID_LOG_INFO, TAG, "Pitch set to: %f", pitch);
-        triggerUpAndRightDown(0);
+        if (mSampleSources[0]->isPlaying()) {
+            triggerUpAndRightDown(0);
+        }
     }
 
     float SimpleMultiPlayer::getTempo() const {
