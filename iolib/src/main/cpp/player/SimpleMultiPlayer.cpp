@@ -229,9 +229,9 @@ void SimpleMultiPlayer::unloadSampleData() {
 }
 
 void SimpleMultiPlayer::triggerDown(int32_t index) {
-    std::thread([this, index]() {
+    LOGD("triggerDown");
+    std::thread([this]() {
         for (int32_t i = 0; i < mNumSampleBuffers; ++i) {
-            LOGD("start gain: %f", getGain(i));
             int32_t sampleIndex = mSampleSources[i]->getCurrentSampleIndex();; // mSampleSources[i]->getCurrentSampleIndex(); //mSampleRate * 10;
             mSampleSources[i]->setPlayMode(sampleIndex);
         }
@@ -240,11 +240,21 @@ void SimpleMultiPlayer::triggerDown(int32_t index) {
     }).detach();
 }
 
+    void SimpleMultiPlayer::triggerUpAndRightDown(int32_t index) {
+        LOGD("triggerUpAndRightDown");
+        std::thread([this]() {
+            fadeGain(0.0f, 180);
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            for (int32_t i = 0; i < mNumSampleBuffers; ++i) {
+                mSampleSources[i]->setStopMode();
+            }
+            mSoundTouch.clear();
+            triggerDown(0);
+        }).detach();
+    }
+
 void SimpleMultiPlayer::triggerUp(int32_t index) {
     LOGD("triggerUp");
-    for (int32_t i = 0; i < mNumSampleBuffers; ++i) {
-        LOGD("stop gain: %f", getGain(i));
-    }
     std::thread([this]() {
         fadeGain(0.0f, 180);
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -328,12 +338,14 @@ float SimpleMultiPlayer::getCurrentTimeInSeconds(int index) {
         mCurrentTempo = tempo;
         mSoundTouch.setTempo(tempo);
         __android_log_print(ANDROID_LOG_INFO, TAG, "Tempo set to: %f", tempo);
+        triggerUpAndRightDown(0);
     }
 
     void SimpleMultiPlayer::setPitchSemiTones(float pitch) {
         mCurrentPitch = pitch;
         mSoundTouch.setPitchSemiTones(pitch);
         __android_log_print(ANDROID_LOG_INFO, TAG, "Pitch set to: %f", pitch);
+        triggerUpAndRightDown(0);
     }
 
     float SimpleMultiPlayer::getTempo() const {

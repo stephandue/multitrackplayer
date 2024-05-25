@@ -58,6 +58,7 @@ public:
     void unloadSampleData();
 
     void triggerDown(int32_t index);
+    void triggerUpAndRightDown(int32_t index);
     void triggerUp(int32_t index);
 
     void resetAll();
