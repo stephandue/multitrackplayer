@@ -165,6 +165,7 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
         loadWavAsset(assetMgr, "2.wav", 1, 0f)
         loadWavAsset(assetMgr, "3.wav", 2, 0f)
         loadWavAsset(assetMgr, "4.wav", 3, 0f)
+        loadWavAsset(assetMgr, "5.wav", 5, 0f)
 
         //loadWavAsset(assetMgr, "bass.wav", 0, 0f)
         //loadWavAsset(assetMgr, "drums.wav", 1, 0f)
