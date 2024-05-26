@@ -83,10 +83,19 @@ DataCallbackResult SimpleMultiPlayer::MyDataCallback::onAudioReady(AudioStream *
         float *floatAudioData = static_cast<float*>(audioData);
         // Feed the mixed audio data into SoundTouch
         mParent->mSoundTouch.putSamples(floatAudioData, numFrames);
+        if (mParent->mSoundTouch.numSamples() < numFrames) {
+            __android_log_print(ANDROID_LOG_ERROR, TAG, "not enough frames from SoundTouch");
+            int extraFrames = numFrames - mParent->mSoundTouch.numSamples();
+            LOGD("extraFrames: %d", extraFrames);
+        }
         // Clear the buffer to ensure no residual data is present
         memset(floatAudioData, 0, numFrames * mParent->mChannelCount * sizeof(float));
         // Retrieve processed samples from SoundTouch
         mParent->mSoundTouch.receiveSamples(floatAudioData, numFrames);
+    }
+
+    if (mParent->mLatencyTuner) {
+        mParent->mLatencyTuner->tune();
     }
 
     return DataCallbackResult::Continue;
@@ -116,8 +125,8 @@ bool SimpleMultiPlayer::openStream() {
     builder.setErrorCallback(mErrorCallback);
     builder.setPerformanceMode(PerformanceMode::LowLatency);
     builder.setSharingMode(SharingMode::Exclusive);
-    builder.setBufferCapacityInFrames(32768);
-    builder.setFramesPerCallback(480);
+//    builder.setBufferCapacityInFrames(32768);
+//    builder.setFramesPerCallback(480);
     LOGD("setSessionId: %d", mAudioSessionId);
     builder.setSessionId((oboe::SessionId) mAudioSessionId);
     builder.setSampleRateConversionQuality(SampleRateConversionQuality::Medium);
@@ -158,6 +167,8 @@ bool SimpleMultiPlayer::openStream() {
     mSoundTouch.setTempo(1.0f); // changing the tempo in any way makes audio crack and delays start/stop times
     mSoundTouch.setPitchSemiTones(0.0);
 //    mSoundTouch.setTempo(1.0f);
+
+    mLatencyTuner = std::make_unique<LatencyTuner>(*mAudioStream);
 
     return true;
 }
@@ -209,11 +220,13 @@ void SimpleMultiPlayer::teardownAudioStream() {
 }
 
 void SimpleMultiPlayer::addSampleSource(SampleSource* source, SampleBuffer* buffer) {
+    __android_log_print(ANDROID_LOG_INFO, TAG, "+++ addSampleSource");
     buffer->resampleData(mSampleRate);
 
     mSampleBuffers.push_back(buffer);
     mSampleSources.push_back(source);
     mNumSampleBuffers++;
+    __android_log_print(ANDROID_LOG_INFO, TAG, "+++ addSampleSource DONE");
 }
 
 void SimpleMultiPlayer::unloadSampleData() {

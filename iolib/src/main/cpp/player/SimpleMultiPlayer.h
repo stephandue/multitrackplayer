@@ -27,6 +27,9 @@
 
 #include <SoundTouch.h>
 
+#include <oboe/LatencyTuner.h>
+
+
 namespace iolib {
 
 /**
@@ -91,6 +94,8 @@ public:
     void fadeGain(float targetGain, int durationMs);
 
     int32_t mAudioSessionId;
+
+    std::unique_ptr<oboe::LatencyTuner> mLatencyTuner;
 
     soundtouch::SoundTouch mSoundTouch;
 
