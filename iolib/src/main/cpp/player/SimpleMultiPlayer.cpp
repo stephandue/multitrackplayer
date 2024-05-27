@@ -97,11 +97,17 @@ DataCallbackResult SimpleMultiPlayer::MyDataCallback::onAudioReady(AudioStream *
             int receivedFrames = mParent->mSoundTouch.receiveSamples(tempBuffer.data(), numFrames);
             LOGD("Received %d frames from SoundTouch", receivedFrames);
 
+            if (receivedFrames == 0) {
+                // Add more frames to SoundTouch if it didn't return enough frames
+                LOGD("SoundTouch did not return enough frames, feeding more data");
+                mParent->mSoundTouch.putSamples(floatAudioData, numFrames);
+                receivedFrames = mParent->mSoundTouch.receiveSamples(tempBuffer.data(), numFrames);
+                LOGD("Received %d frames from SoundTouch after feeding more data", receivedFrames);
+            }
+
             mParent->mIntermediateBuffer.insert(mParent->mIntermediateBuffer.end(), tempBuffer.begin(), tempBuffer.begin() + receivedFrames * mParent->mChannelCount);
         }
 
-
-        // Copy from intermediate buffer to audioData
         if (mParent->mIntermediateBuffer.size() >= totalFramesNeeded) {
             std::copy(mParent->mIntermediateBuffer.begin(), mParent->mIntermediateBuffer.begin() + totalFramesNeeded, floatAudioData);
             mParent->mIntermediateBuffer.erase(mParent->mIntermediateBuffer.begin(), mParent->mIntermediateBuffer.begin() + totalFramesNeeded);
