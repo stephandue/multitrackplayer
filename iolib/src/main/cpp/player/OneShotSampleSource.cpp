@@ -16,6 +16,7 @@
 
 #include <string.h>
 #include <vector>
+#include <cmath>
 
 #include "wav/WavStreamReader.h"
 
@@ -23,7 +24,13 @@
 
 namespace iolib {
 
-void OneShotSampleSource::mixAudio(float* outBuff, int numChannels, int32_t numFrames) {
+void OneShotSampleSource::mixAudio(float* outBuff, int numChannels, int32_t numFrames, double inputOutputSampleRatio) {
+//    int32_t adjustedNumFrames = static_cast<int32_t>(std::round(numFrames / inputOutputSampleRatio));
+//    if (numFrames != adjustedNumFrames) {
+//        LOGD("+++ numFrames = %d, adjustedNumFrames = %d, inputOutputSampleRatio =%f", numFrames, adjustedNumFrames, inputOutputSampleRatio);
+//    }
+//    numFrames = adjustedNumFrames;
+//    LOGD("+++ numFrames = %d, adjustedNumFrames = %d", numFrames, adjustedNumFrames);
     int32_t numSamples = mSampleBuffer->getNumSamples();
     int32_t sampleChannels = mSampleBuffer->getProperties().channelCount;
     int32_t samplesLeft = numSamples - mCurSampleIndex;
@@ -32,6 +39,8 @@ void OneShotSampleSource::mixAudio(float* outBuff, int numChannels, int32_t numF
                          : 0;
 
     if (numWriteFrames != 0) {
+
+//        numWriteFrames += 50;
 
         const float* data  = mSampleBuffer->getSampleData();
 

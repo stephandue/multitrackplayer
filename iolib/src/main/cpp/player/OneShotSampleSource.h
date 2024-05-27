@@ -30,7 +30,7 @@ public:
     OneShotSampleSource(SampleBuffer *sampleBuffer, float pan) : SampleSource(sampleBuffer, pan) {};
     virtual ~OneShotSampleSource() {};
 
-    virtual void mixAudio(float* outBuff, int numChannels, int32_t numFrames);
+    virtual void mixAudio(float* outBuff, int numChannels, int32_t numFrames, double inputOutputSampleRatio);
 };
 
 } // namespace iolib

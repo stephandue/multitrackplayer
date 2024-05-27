@@ -74,32 +74,41 @@ DataCallbackResult SimpleMultiPlayer::MyDataCallback::onAudioReady(AudioStream *
     for(int32_t index = 0; index < mParent->mNumSampleBuffers; index++) {
         if (mParent->mSampleSources[index]->isPlaying()) {
             mParent->mSampleSources[index]->mixAudio((float*)audioData, mParent->mChannelCount,
-                                                     numFrames);
+                                                     numFrames, mParent->mSoundTouch.getInputOutputSampleRatio());
         }
     }
 
-    float *floatAudioData = static_cast<float*>(audioData);
-    int32_t totalFramesNeeded = numFrames * mParent->mChannelCount;
-
-    {
-        std::lock_guard<std::mutex> lock(mParent->mBufferMutex);
-
-        // Ensure the intermediate buffer contains enough frames
-        while (mParent->mIntermediateBuffer.size() < totalFramesNeeded) {
-            std::vector<float> tempBuffer(numFrames * mParent->mChannelCount);
-            mParent->mSoundTouch.putSamples(floatAudioData, numFrames);
-            int receivedFrames = mParent->mSoundTouch.receiveSamples(tempBuffer.data(), numFrames);
-            mParent->mIntermediateBuffer.insert(mParent->mIntermediateBuffer.end(), tempBuffer.begin(), tempBuffer.begin() + receivedFrames * mParent->mChannelCount);
+    if (mParent->mSampleSources[0]->isPlaying()) {
+        // Process the mixed audio data with SoundTouch
+        float *floatAudioData = static_cast<float*>(audioData);
+        // Feed the mixed audio data into SoundTouch
+        mParent->mSoundTouch.putSamples(floatAudioData, numFrames);
+        int availableSamplesBefore = mParent->mSoundTouch.numSamples();
+        double getInputOutputSampleRatio = mParent->mSoundTouch.getInputOutputSampleRatio();
+        if (mParent->mSoundTouch.numSamples() < numFrames) {
+            __android_log_print(ANDROID_LOG_ERROR, TAG, "not enough frames from SoundTouch");
+            int extraFrames = numFrames - mParent->mSoundTouch.numSamples();
+            LOGD("extraFrames: %d", extraFrames);
         }
-
-        // Copy from intermediate buffer to audioData
-        if (mParent->mIntermediateBuffer.size() >= totalFramesNeeded) {
-            std::copy(mParent->mIntermediateBuffer.begin(), mParent->mIntermediateBuffer.begin() + totalFramesNeeded, floatAudioData);
-            mParent->mIntermediateBuffer.erase(mParent->mIntermediateBuffer.begin(), mParent->mIntermediateBuffer.begin() + totalFramesNeeded);
-        } else {
-            __android_log_print(ANDROID_LOG_ERROR, TAG, "Intermediate buffer underrun");
-        }
+        // Clear the buffer to ensure no residual data is present
+        memset(floatAudioData, 0, numFrames * mParent->mChannelCount * sizeof(float));
+        // Retrieve processed samples from SoundTouch
+//        mParent->mSoundTouch.receiveSamples(floatAudioData, numFrames);
+        int numProcessedSamples = mParent->mSoundTouch.receiveSamples(floatAudioData, numFrames);
+//        if (mParent->stopFeeding) {
+//            mParent->mSoundTouch.receiveSamples(floatAudioData, numFrames);
+//        }
+        int availableSamplesAfter = mParent->mSoundTouch.numSamples();
+        // numProcessedSamples will be less than numFrames because the tempo is increased
+//        LOGD("numFrames): %d", numFrames);
+//        LOGD("InputOutputSampleRatio): %f", getInputOutputSampleRatio);
+//        LOGD("numProcessedSamples): %d", numProcessedSamples);
+//        LOGD("availableSamplesBefore: %d", availableSamplesBefore);
+//        LOGD("availableSamplesAfter: %d", availableSamplesAfter);
+//        LOGD("_________________________");
     }
+
+
 
 
     if (mParent->mLatencyTuner) {
@@ -379,7 +388,8 @@ float SimpleMultiPlayer::getCurrentTimeInSeconds(int index) {
 
     void SimpleMultiPlayer::setPitchSemiTones(float pitch) {
         mCurrentPitch = pitch;
-        mSoundTouch.setPitchSemiTones(pitch);
+//        mSoundTouch.setPitchSemiTones(pitch);
+        stopFeeding = !stopFeeding;
         __android_log_print(ANDROID_LOG_INFO, TAG, "Pitch set to: %f", pitch);
 //        if (mSampleSources[0]->isPlaying()) {
 //            triggerUpAndRightDown(0);

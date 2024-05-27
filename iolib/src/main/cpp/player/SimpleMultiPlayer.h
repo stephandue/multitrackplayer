@@ -79,7 +79,7 @@ public:
     float getCurrentTimeInSeconds(int index);
     float getTotalLengthInSeconds(int index);
 
-    float mCurrentTempo;
+    float mCurrentTempo = 1.0f;
     float mCurrentPitch;
 
     void setTempo(float tempo);
@@ -140,13 +140,12 @@ private:
 
     std::vector<SampleBuffer*>  mSampleBuffers;
 
-    bool    mOutputReset;
+    bool mOutputReset;
 
     std::shared_ptr<MyDataCallback> mDataCallback;
     std::shared_ptr<MyErrorCallback> mErrorCallback;
-    std::vector<float> mIntermediateBuffer;
-    std::mutex mBufferMutex;
 
+    bool stopFeeding;
 
 };
 
