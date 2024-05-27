@@ -28,47 +28,47 @@ void OneShotSampleSource::mixAudio(float* outBuff, int numChannels, int32_t numF
     int32_t sampleChannels = mSampleBuffer->getProperties().channelCount;
     int32_t samplesLeft = numSamples - mCurSampleIndex;
     int32_t numWriteFrames = mIsPlaying
-                         ? std::min(numFrames, samplesLeft / sampleChannels)
-                         : 0;
+                             ? std::min(numFrames, samplesLeft / sampleChannels)
+                             : 0;
 
     if (numWriteFrames != 0) {
-
         const float* data  = mSampleBuffer->getSampleData();
+        float adjustedSampleIndex = mCurSampleIndex;
+        LOGD("mixAudio: Starting mix, mCurSampleIndex = %d, numWriteFrames = %d, mTempo = %f", mCurSampleIndex, numWriteFrames, mTempo);
 
         if ((sampleChannels == 1) && (numChannels == 1)) {
-            // MONO output from MONO samples
-            for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++) {
-                outBuff[frameIndex] += data[mCurSampleIndex++] * mGain;
+            for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++, adjustedSampleIndex += mTempo) {
+                outBuff[frameIndex] += data[static_cast<int32_t>(adjustedSampleIndex)] * mGain;
             }
         } else if ((sampleChannels == 1) && (numChannels == 2)) {
-            // STEREO output from MONO samples
             int dstSampleIndex = 0;
-            for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++) {
-                outBuff[dstSampleIndex++] += data[mCurSampleIndex] * mLeftGain;
-                outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mRightGain;
+            for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++, adjustedSampleIndex += mTempo) {
+                outBuff[dstSampleIndex++] += data[static_cast<int32_t>(adjustedSampleIndex)] * mLeftGain;
+                outBuff[dstSampleIndex++] += data[static_cast<int32_t>(adjustedSampleIndex)] * mRightGain;
             }
         } else if ((sampleChannels == 2) && (numChannels == 1)) {
-            // MONO output from STEREO samples
             int dstSampleIndex = 0;
-            for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++) {
-                outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mLeftGain +
-                                             data[mCurSampleIndex++] * mRightGain;
+            for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++, adjustedSampleIndex += mTempo) {
+                outBuff[dstSampleIndex++] += data[static_cast<int32_t>(adjustedSampleIndex)] * mLeftGain +
+                                             data[static_cast<int32_t>(adjustedSampleIndex)] * mRightGain;
             }
         } else if ((sampleChannels == 2) && (numChannels == 2)) {
-            // STEREO output from STEREO samples
             int dstSampleIndex = 0;
-            for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++) {
-                outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mLeftGain;
-                outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mRightGain;
+            for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++, adjustedSampleIndex += mTempo) {
+                outBuff[dstSampleIndex++] += data[static_cast<int32_t>(adjustedSampleIndex)] * mLeftGain;
+                outBuff[dstSampleIndex++] += data[static_cast<int32_t>(adjustedSampleIndex)] * mRightGain;
             }
         }
+
+        mCurSampleIndex = static_cast<int32_t>(adjustedSampleIndex);
+
+        LOGD("mixAudio: mCurSampleIndex = %d, numSamples = %d, numWriteFrames = %d", mCurSampleIndex, numSamples, numWriteFrames);
 
         if (mCurSampleIndex >= numSamples) {
             LOGD("Reached End Of Song: mCurSampleIndex = %d, numSamples = %d", mCurSampleIndex, numSamples);
             mIsPlaying = false;
         }
-
-    }  else {
+    } else {
         LOGD("No frames to write.");
     }
 

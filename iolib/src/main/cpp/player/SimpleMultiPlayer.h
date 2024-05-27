@@ -100,7 +100,7 @@ public:
     soundtouch::SoundTouch mSoundTouch;
 
 // Sample Data
-int32_t mNumSampleBuffers;
+    int32_t mNumSampleBuffers;
     std::vector<SampleSource*>  mSampleSources;
 private:
     class MyDataCallback : public oboe::AudioStreamDataCallback {

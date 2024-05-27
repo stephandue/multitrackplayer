@@ -85,12 +85,21 @@ DataCallbackResult SimpleMultiPlayer::MyDataCallback::onAudioReady(AudioStream *
         std::lock_guard<std::mutex> lock(mParent->mBufferMutex);
 
         // Ensure the intermediate buffer contains enough frames
+//        while (mParent->mIntermediateBuffer.size() < totalFramesNeeded) {
+//            std::vector<float> tempBuffer(numFrames * mParent->mChannelCount);
+//            mParent->mSoundTouch.putSamples(floatAudioData, numFrames);
+//            int receivedFrames = mParent->mSoundTouch.receiveSamples(tempBuffer.data(), numFrames);
+//            mParent->mIntermediateBuffer.insert(mParent->mIntermediateBuffer.end(), tempBuffer.begin(), tempBuffer.begin() + receivedFrames * mParent->mChannelCount);
+//        }
         while (mParent->mIntermediateBuffer.size() < totalFramesNeeded) {
             std::vector<float> tempBuffer(numFrames * mParent->mChannelCount);
             mParent->mSoundTouch.putSamples(floatAudioData, numFrames);
             int receivedFrames = mParent->mSoundTouch.receiveSamples(tempBuffer.data(), numFrames);
+            LOGD("Received %d frames from SoundTouch", receivedFrames);
+
             mParent->mIntermediateBuffer.insert(mParent->mIntermediateBuffer.end(), tempBuffer.begin(), tempBuffer.begin() + receivedFrames * mParent->mChannelCount);
         }
+
 
         // Copy from intermediate buffer to audioData
         if (mParent->mIntermediateBuffer.size() >= totalFramesNeeded) {
@@ -371,6 +380,10 @@ float SimpleMultiPlayer::getCurrentTimeInSeconds(int index) {
     void SimpleMultiPlayer::setTempo(float tempo) {
         mCurrentTempo = tempo;
         mSoundTouch.setTempo(tempo);
+        for (auto& source : mSampleSources) {
+            dynamic_cast<OneShotSampleSource*>(source)->setTempo(tempo);
+            LOGD("Updated tempo for source: %f", tempo);
+        }
         __android_log_print(ANDROID_LOG_INFO, TAG, "Tempo set to: %f", tempo);
 //        if (mSampleSources[0]->isPlaying()) {
 //            triggerUpAndRightDown(0);

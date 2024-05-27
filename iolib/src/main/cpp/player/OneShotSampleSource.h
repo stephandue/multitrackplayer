@@ -27,10 +27,16 @@ namespace iolib {
  */
 class OneShotSampleSource: public SampleSource {
 public:
-    OneShotSampleSource(SampleBuffer *sampleBuffer, float pan) : SampleSource(sampleBuffer, pan) {};
+//    OneShotSampleSource(SampleBuffer *sampleBuffer, float pan) : SampleSource(sampleBuffer, pan) {};
+    OneShotSampleSource(SampleBuffer *sampleBuffer, float pan) : SampleSource(sampleBuffer, pan), mTempo(1.0f) {};
     virtual ~OneShotSampleSource() {};
 
     virtual void mixAudio(float* outBuff, int numChannels, int32_t numFrames);
+    void setTempo(float tempo) {
+        mTempo = tempo;
+    }
+private:
+    float mTempo = 1.0f;
 };
 
 } // namespace iolib
