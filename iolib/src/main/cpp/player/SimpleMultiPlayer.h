@@ -144,6 +144,8 @@ private:
 
     std::shared_ptr<MyDataCallback> mDataCallback;
     std::shared_ptr<MyErrorCallback> mErrorCallback;
+    std::vector<float> mIntermediateBuffer;
+    std::mutex mBufferMutex;
 
 
 };

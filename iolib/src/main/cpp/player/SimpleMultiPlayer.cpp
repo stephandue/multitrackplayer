@@ -78,21 +78,29 @@ DataCallbackResult SimpleMultiPlayer::MyDataCallback::onAudioReady(AudioStream *
         }
     }
 
-    if (mParent->mSampleSources[0]->isPlaying()) {
-        // Process the mixed audio data with SoundTouch
-        float *floatAudioData = static_cast<float*>(audioData);
-        // Feed the mixed audio data into SoundTouch
-        mParent->mSoundTouch.putSamples(floatAudioData, numFrames);
-        if (mParent->mSoundTouch.numSamples() < numFrames) {
-            __android_log_print(ANDROID_LOG_ERROR, TAG, "not enough frames from SoundTouch");
-            int extraFrames = numFrames - mParent->mSoundTouch.numSamples();
-            LOGD("extraFrames: %d", extraFrames);
+    float *floatAudioData = static_cast<float*>(audioData);
+    int32_t totalFramesNeeded = numFrames * mParent->mChannelCount;
+
+    {
+        std::lock_guard<std::mutex> lock(mParent->mBufferMutex);
+
+        // Ensure the intermediate buffer contains enough frames
+        while (mParent->mIntermediateBuffer.size() < totalFramesNeeded) {
+            std::vector<float> tempBuffer(numFrames * mParent->mChannelCount);
+            mParent->mSoundTouch.putSamples(floatAudioData, numFrames);
+            int receivedFrames = mParent->mSoundTouch.receiveSamples(tempBuffer.data(), numFrames);
+            mParent->mIntermediateBuffer.insert(mParent->mIntermediateBuffer.end(), tempBuffer.begin(), tempBuffer.begin() + receivedFrames * mParent->mChannelCount);
         }
-        // Clear the buffer to ensure no residual data is present
-        memset(floatAudioData, 0, numFrames * mParent->mChannelCount * sizeof(float));
-        // Retrieve processed samples from SoundTouch
-        mParent->mSoundTouch.receiveSamples(floatAudioData, numFrames);
+
+        // Copy from intermediate buffer to audioData
+        if (mParent->mIntermediateBuffer.size() >= totalFramesNeeded) {
+            std::copy(mParent->mIntermediateBuffer.begin(), mParent->mIntermediateBuffer.begin() + totalFramesNeeded, floatAudioData);
+            mParent->mIntermediateBuffer.erase(mParent->mIntermediateBuffer.begin(), mParent->mIntermediateBuffer.begin() + totalFramesNeeded);
+        } else {
+            __android_log_print(ANDROID_LOG_ERROR, TAG, "Intermediate buffer underrun");
+        }
     }
+
 
     if (mParent->mLatencyTuner) {
         mParent->mLatencyTuner->tune();
