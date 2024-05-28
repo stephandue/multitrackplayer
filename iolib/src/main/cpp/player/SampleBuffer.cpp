@@ -100,6 +100,7 @@ void SampleBuffer::resampleData(int sampleRate) {
         // nothing to do
         return;
     }
+    LOGD("+++ resampleData: %d, sampleRate %d", mAudioProperties.sampleRate, sampleRate);
 
     ResampleBlock inputBlock;
     inputBlock.mBuffer = mSampleData;

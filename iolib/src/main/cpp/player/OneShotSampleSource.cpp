@@ -40,37 +40,65 @@ void OneShotSampleSource::mixAudio(float* outBuff, int numChannels, int32_t numF
 
     if (numWriteFrames != 0) {
 
-//        numWriteFrames += 50;
+        int32_t adjustedWriteFrames = static_cast<int32_t>(std::round(numWriteFrames / mSoundTouch.getInputOutputSampleRatio()));
+        if (numWriteFrames != adjustedWriteFrames) {
+//            LOGD("+++ numWriteFrames = %d, adjustedWriteFrames = %d, inputOutputSampleRatio =%f", numWriteFrames, adjustedWriteFrames, mSoundTouch.getInputOutputSampleRatio());
+        }
+
+        if (mSoundTouch.numSamples() < numWriteFrames) {
+            __android_log_print(ANDROID_LOG_ERROR, "OneShotSampleSource", "not enough frames from SoundTouch");
+            int extraFrames = numWriteFrames - mSoundTouch.numSamples();
+            LOGD("extraFrames: %d", extraFrames);
+            adjustedWriteFrames = adjustedWriteFrames + 100; // TODO check if there are still 100 availble before adding them
+        }
+//        adjustedWriteFrames = adjustedWriteFrames + 50;
 
         const float* data  = mSampleBuffer->getSampleData();
+
+        int32_t mCurSampleIndexBefore = mCurSampleIndex;
+//        LOGD("+++ before: %d", mCurSampleIndex);
+
+        // Buffer to hold processed samples
+        std::vector<float> processedSamples(numWriteFrames * sampleChannels);
+        // Feed the required number of samples to SoundTouch
+        mSoundTouch.putSamples(data + mCurSampleIndex, adjustedWriteFrames);
+        // Calculate the actual number of processed frames
+        mSoundTouch.receiveSamples(processedSamples.data(), numWriteFrames);
+
 
         if ((sampleChannels == 1) && (numChannels == 1)) {
             // MONO output from MONO samples
             for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++) {
-                outBuff[frameIndex] += data[mCurSampleIndex++] * mGain;
+                outBuff[frameIndex] += processedSamples[frameIndex] * mGain;
             }
         } else if ((sampleChannels == 1) && (numChannels == 2)) {
             // STEREO output from MONO samples
             int dstSampleIndex = 0;
             for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++) {
-                outBuff[dstSampleIndex++] += data[mCurSampleIndex] * mLeftGain;
-                outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mRightGain;
+                outBuff[dstSampleIndex++] += processedSamples[frameIndex] * mLeftGain;
+                outBuff[dstSampleIndex++] += processedSamples[frameIndex] * mRightGain;
             }
         } else if ((sampleChannels == 2) && (numChannels == 1)) {
             // MONO output from STEREO samples
             int dstSampleIndex = 0;
             for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++) {
-                outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mLeftGain +
-                                             data[mCurSampleIndex++] * mRightGain;
+                outBuff[dstSampleIndex++] += processedSamples[frameIndex * 2] * mLeftGain +
+                                             processedSamples[frameIndex * 2 + 1] * mRightGain;
             }
         } else if ((sampleChannels == 2) && (numChannels == 2)) {
             // STEREO output from STEREO samples
             int dstSampleIndex = 0;
             for (int32_t frameIndex = 0; frameIndex < numWriteFrames; frameIndex++) {
-                outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mLeftGain;
-                outBuff[dstSampleIndex++] += data[mCurSampleIndex++] * mRightGain;
+                outBuff[dstSampleIndex++] += processedSamples[frameIndex * 2] * mLeftGain;
+                outBuff[dstSampleIndex++] += processedSamples[frameIndex * 2 + 1] * mRightGain;
             }
         }
+
+        mCurSampleIndex += adjustedWriteFrames * sampleChannels;
+        int32_t difference = (mCurSampleIndex - mCurSampleIndexBefore) - (numWriteFrames * 2);
+//        LOGD("+++ difference: %d", difference);
+//        LOGD("+++ after: %d", mCurSampleIndex);
+//        LOGD("+++ _______________________");
 
         if (mCurSampleIndex >= numSamples) {
             LOGD("Reached End Of Song: mCurSampleIndex = %d, numSamples = %d", mCurSampleIndex, numSamples);

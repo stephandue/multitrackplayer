@@ -24,6 +24,7 @@
 
 #include "SampleBuffer.h"
 
+#include "SoundTouch.h"
 
 #define LOG_TAG "SampleSource"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
@@ -46,8 +47,21 @@ public:
     SampleSource(SampleBuffer *sampleBuffer, float pan)
      : mSampleBuffer(sampleBuffer), mCurSampleIndex(0), mIsPlaying(false), mGain(1.0f) {
         setPan(pan);
+        mSoundTouch.setSampleRate(mSampleBuffer->getSampleRate());
+        mSoundTouch.setChannels(mSampleBuffer->getChannelCount());
+        //mSoundTouch.setPitch(0.8f);
+        //mSoundTouch.setTempo(1.3f); // changing the tempo in any way makes audio crack and delays start/stop times
+        //mSoundTouch.setTempo(1.0f);
     }
     virtual ~SampleSource() {}
+
+    void setTempo(float tempo) {
+        mSoundTouch.setTempo(tempo);
+    }
+
+    void setPitchSemiTones(float pitch) {
+        mSoundTouch.setPitchSemiTones(pitch);
+    }
 
     //void setPlayMode() { mCurSampleIndex = 0; mIsPlaying = true; }
     void setPlayMode(int32_t sampleIndex) {
@@ -119,6 +133,8 @@ protected:
 
     // Overall gain
     float mGain;
+
+    soundtouch::SoundTouch mSoundTouch;
 
 
 private:
