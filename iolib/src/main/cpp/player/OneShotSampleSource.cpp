@@ -24,13 +24,7 @@
 
 namespace iolib {
 
-void OneShotSampleSource::mixAudio(float* outBuff, int numChannels, int32_t numFrames, double inputOutputSampleRatio) {
-//    int32_t adjustedNumFrames = static_cast<int32_t>(std::round(numFrames / inputOutputSampleRatio));
-//    if (numFrames != adjustedNumFrames) {
-//        LOGD("+++ numFrames = %d, adjustedNumFrames = %d, inputOutputSampleRatio =%f", numFrames, adjustedNumFrames, inputOutputSampleRatio);
-//    }
-//    numFrames = adjustedNumFrames;
-//    LOGD("+++ numFrames = %d, adjustedNumFrames = %d", numFrames, adjustedNumFrames);
+void OneShotSampleSource::mixAudio(float* outBuff, int numChannels, int32_t numFrames) {
     int32_t numSamples = mSampleBuffer->getNumSamples();
     int32_t sampleChannels = mSampleBuffer->getProperties().channelCount;
     int32_t samplesLeft = numSamples - mCurSampleIndex;
@@ -41,11 +35,7 @@ void OneShotSampleSource::mixAudio(float* outBuff, int numChannels, int32_t numF
     if (numWriteFrames != 0) {
 
         int32_t adjustedWriteFrames = static_cast<int32_t>(std::round(numWriteFrames / mSoundTouch.getInputOutputSampleRatio()));
-        if (numWriteFrames != adjustedWriteFrames) {
-//            LOGD("+++ numWriteFrames = %d, adjustedWriteFrames = %d, inputOutputSampleRatio =%f", numWriteFrames, adjustedWriteFrames, mSoundTouch.getInputOutputSampleRatio());
-        }
 
-        LOGD("soundTouch Buffer: %d, samples Left: %d", mSoundTouch.numSamples(), (samplesLeft / sampleChannels));
         // TODO make sure this is triggered for all samples sources otherwise they get out of sync! check if mSoundTouch.numSamples() can vary between the sample sources
         int32_t desiredSoundTouchBuffer = 4000;
         if (mSoundTouch.numSamples() < desiredSoundTouchBuffer) {
@@ -62,10 +52,13 @@ void OneShotSampleSource::mixAudio(float* outBuff, int numChannels, int32_t numF
             LOGD("extraFrames: %d", extraFrames);
         }
 
-        const float* data  = mSampleBuffer->getSampleData();
+        // Check if samplesLeft / sampleChannels is less than adjustedWriteFrames
+        if ((samplesLeft / sampleChannels) < adjustedWriteFrames) {
+            adjustedWriteFrames = samplesLeft / sampleChannels;
+            LOGD("adjustedWriteFrames set to samplesLeft / sampleChannels: %d", adjustedWriteFrames);
+        }
 
-        int32_t mCurSampleIndexBefore = mCurSampleIndex;
-//        LOGD("+++ before: %d", mCurSampleIndex);
+        const float* data  = mSampleBuffer->getSampleData();
 
         // Buffer to hold processed samples
         std::vector<float> processedSamples(numWriteFrames * sampleChannels);
@@ -104,11 +97,6 @@ void OneShotSampleSource::mixAudio(float* outBuff, int numChannels, int32_t numF
         }
 
         mCurSampleIndex += adjustedWriteFrames * sampleChannels;
-
-        int32_t difference = (mCurSampleIndex - mCurSampleIndexBefore) - (numWriteFrames * 2);
-//        LOGD("+++ difference: %d", difference);
-//        LOGD("+++ after: %d", mCurSampleIndex);
-//        LOGD("+++ _______________________");
 
         if (mCurSampleIndex >= numSamples) {
             LOGD("Reached End Of Song: mCurSampleIndex = %d, numSamples = %d", mCurSampleIndex, numSamples);

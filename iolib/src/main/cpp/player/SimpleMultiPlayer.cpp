@@ -24,8 +24,6 @@
 #include "OneShotSampleSource.h"
 #include "SimpleMultiPlayer.h"
 
-#include <SoundTouch.h>
-
 #include <atomic>
 #include <vector>
 #include <thread>
@@ -74,42 +72,9 @@ DataCallbackResult SimpleMultiPlayer::MyDataCallback::onAudioReady(AudioStream *
     for(int32_t index = 0; index < mParent->mNumSampleBuffers; index++) {
         if (mParent->mSampleSources[index]->isPlaying()) {
             mParent->mSampleSources[index]->mixAudio((float*)audioData, mParent->mChannelCount,
-                                                     numFrames, mParent->mSoundTouch.getInputOutputSampleRatio());
+                                                     numFrames);
         }
     }
-
-    if (mParent->mSampleSources[0]->isPlaying()) {
-        // Process the mixed audio data with SoundTouch
-        float *floatAudioData = static_cast<float*>(audioData);
-        // Feed the mixed audio data into SoundTouch
-        mParent->mSoundTouch.putSamples(floatAudioData, numFrames);
-        int availableSamplesBefore = mParent->mSoundTouch.numSamples();
-        double getInputOutputSampleRatio = mParent->mSoundTouch.getInputOutputSampleRatio();
-        if (mParent->mSoundTouch.numSamples() < numFrames) {
-            __android_log_print(ANDROID_LOG_ERROR, TAG, "not enough frames from SoundTouch");
-            int extraFrames = numFrames - mParent->mSoundTouch.numSamples();
-            LOGD("extraFrames: %d", extraFrames);
-        }
-        // Clear the buffer to ensure no residual data is present
-        memset(floatAudioData, 0, numFrames * mParent->mChannelCount * sizeof(float));
-        // Retrieve processed samples from SoundTouch
-//        mParent->mSoundTouch.receiveSamples(floatAudioData, numFrames);
-        int numProcessedSamples = mParent->mSoundTouch.receiveSamples(floatAudioData, numFrames);
-//        if (mParent->stopFeeding) {
-//            mParent->mSoundTouch.receiveSamples(floatAudioData, numFrames);
-//        }
-        int availableSamplesAfter = mParent->mSoundTouch.numSamples();
-        // numProcessedSamples will be less than numFrames because the tempo is increased
-//        LOGD("numFrames): %d", numFrames);
-//        LOGD("InputOutputSampleRatio): %f", getInputOutputSampleRatio);
-//        LOGD("numProcessedSamples): %d", numProcessedSamples);
-//        LOGD("availableSamplesBefore: %d", availableSamplesBefore);
-//        LOGD("availableSamplesAfter: %d", availableSamplesAfter);
-//        LOGD("_________________________");
-    }
-
-
-
 
     if (mParent->mLatencyTuner) {
         mParent->mLatencyTuner->tune();
@@ -175,15 +140,6 @@ bool SimpleMultiPlayer::openStream() {
     }
 
     mSampleRate = mAudioStream->getSampleRate();
-
-    // Init SoundTouch
-    LOGD("mAudioStream->getSampleRate(): %d", mAudioStream->getSampleRate());
-    mSoundTouch.setSampleRate(mAudioStream->getSampleRate());
-    mSoundTouch.setChannels(mAudioStream->getChannelCount());
-//    mSoundTouch.setPitch(1/0.7f);
-    mSoundTouch.setTempo(1.0f); // changing the tempo in any way makes audio crack and delays start/stop times
-    mSoundTouch.setPitchSemiTones(0.0);
-//    mSoundTouch.setTempo(1.0f);
 
     mLatencyTuner = std::make_unique<LatencyTuner>(*mAudioStream);
 
@@ -281,7 +237,6 @@ void SimpleMultiPlayer::triggerDown(int32_t index) {
             for (int32_t i = 0; i < mNumSampleBuffers; ++i) {
                 mSampleSources[i]->setStopMode();
             }
-            mSoundTouch.clear();
             triggerDown(0);
         }).detach();
     }
@@ -294,7 +249,6 @@ void SimpleMultiPlayer::triggerUp(int32_t index) {
         for (int32_t i = 0; i < mNumSampleBuffers; ++i) {
             mSampleSources[i]->setStopMode();
         }
-        mSoundTouch.clear();
     }).detach();
 
 }
@@ -379,14 +333,10 @@ float SimpleMultiPlayer::getCurrentTimeInSeconds(int index) {
 
     void SimpleMultiPlayer::setTempo(float tempo) {
         mCurrentTempo = tempo;
-//        mSoundTouch.setTempo(tempo);
         for(int32_t index = 0; index < mNumSampleBuffers; index++) {
             mSampleSources[index]->setTempo(tempo);
         }
         __android_log_print(ANDROID_LOG_INFO, TAG, "Tempo set to: %f", tempo);
-//        if (mSampleSources[0]->isPlaying()) {
-//            triggerUpAndRightDown(0);
-//        }
     }
 
     void SimpleMultiPlayer::setPitchSemiTones(float pitch) {
@@ -394,12 +344,7 @@ float SimpleMultiPlayer::getCurrentTimeInSeconds(int index) {
         for(int32_t index = 0; index < mNumSampleBuffers; index++) {
             mSampleSources[index]->setPitchSemiTones(pitch);
         }
-//        mSoundTouch.setPitchSemiTones(pitch);
-//        stopFeeding = !stopFeeding;
         __android_log_print(ANDROID_LOG_INFO, TAG, "Pitch set to: %f", pitch);
-//        if (mSampleSources[0]->isPlaying()) {
-//            triggerUpAndRightDown(0);
-//        }
     }
 
     float SimpleMultiPlayer::getTempo() const {
