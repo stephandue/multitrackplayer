@@ -45,13 +45,22 @@ void OneShotSampleSource::mixAudio(float* outBuff, int numChannels, int32_t numF
 //            LOGD("+++ numWriteFrames = %d, adjustedWriteFrames = %d, inputOutputSampleRatio =%f", numWriteFrames, adjustedWriteFrames, mSoundTouch.getInputOutputSampleRatio());
         }
 
+        LOGD("soundTouch Buffer: %d, samples Left: %d", mSoundTouch.numSamples(), (samplesLeft / sampleChannels));
+        // TODO make sure this is triggered for all samples sources otherwise they get out of sync! check if mSoundTouch.numSamples() can vary between the sample sources
+        int32_t desiredSoundTouchBuffer = 4000;
+        if (mSoundTouch.numSamples() < desiredSoundTouchBuffer) {
+            int32_t framesToAdd = desiredSoundTouchBuffer - mSoundTouch.numSamples();
+            if (framesToAdd < (samplesLeft / sampleChannels)) {
+                adjustedWriteFrames = adjustedWriteFrames + framesToAdd;
+                LOGD("added %d frames to the buffer", framesToAdd);
+            }
+        }
+
         if (mSoundTouch.numSamples() < numWriteFrames) {
             __android_log_print(ANDROID_LOG_ERROR, "OneShotSampleSource", "not enough frames from SoundTouch");
             int extraFrames = numWriteFrames - mSoundTouch.numSamples();
             LOGD("extraFrames: %d", extraFrames);
-            adjustedWriteFrames = adjustedWriteFrames + 100; // TODO check if there are still 100 availble before adding them
         }
-//        adjustedWriteFrames = adjustedWriteFrames + 50;
 
         const float* data  = mSampleBuffer->getSampleData();
 
@@ -95,6 +104,7 @@ void OneShotSampleSource::mixAudio(float* outBuff, int numChannels, int32_t numF
         }
 
         mCurSampleIndex += adjustedWriteFrames * sampleChannels;
+
         int32_t difference = (mCurSampleIndex - mCurSampleIndexBefore) - (numWriteFrames * 2);
 //        LOGD("+++ difference: %d", difference);
 //        LOGD("+++ after: %d", mCurSampleIndex);
