@@ -77,6 +77,7 @@ public:
 
     int32_t getCurrentSampleIndex(int index);
     float getCurrentTimeInSeconds(int index);
+    void setCurrentTimeInSeconds(float newTime);
     float getTotalLengthInSeconds(int index);
 
     float mCurrentTempo = 1.0f;

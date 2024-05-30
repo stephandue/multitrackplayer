@@ -49,9 +49,6 @@ public:
         setPan(pan);
         mSoundTouch.setSampleRate(mSampleBuffer->getSampleRate());
         mSoundTouch.setChannels(mSampleBuffer->getChannelCount());
-        //mSoundTouch.setPitch(0.8f);
-        //mSoundTouch.setTempo(1.3f); // changing the tempo in any way makes audio crack and delays start/stop times
-        //mSoundTouch.setTempo(1.0f);
     }
     virtual ~SampleSource() {}
 
@@ -70,6 +67,7 @@ public:
 //            sampleIndex = 0;
 //        }
         // Set the current sample index and playback flag.
+        mSoundTouch.clear();
         mCurSampleIndex = sampleIndex;
         mIsPlaying = true;
     }
@@ -105,8 +103,31 @@ public:
         return mCurSampleIndex;
     }
 
+    void setCurrentSampleIndex(int32_t sampleIndex) {
+        int32_t numSamples = mSampleBuffer->getNumSamples();
+        int32_t maxSampleIndex = numSamples - 1;
+        mSoundTouch.clear();
+        if (sampleIndex < 0) {
+            mCurSampleIndex = 0;
+        } else if (sampleIndex > maxSampleIndex) {
+            mCurSampleIndex = maxSampleIndex;
+        } else {
+            mCurSampleIndex = sampleIndex;
+        }
+    }
+
+    void setCurrentTimeInSeconds(float seconds) {
+        int32_t sampleRate = mSampleBuffer->getSampleRate() * mSampleBuffer->getChannelCount();
+        if (sampleRate > 0) {
+            int32_t sampleIndex = static_cast<int32_t>(seconds * sampleRate);
+            setCurrentSampleIndex(sampleIndex);
+        } else {
+            LOGD("Invalid sample rate: %d", sampleRate);
+        }
+    }
+
     float getCurrentTimeInSeconds() {
-        int32_t sampleRate = mSampleBuffer->getSampleRate() * 2;
+        int32_t sampleRate = mSampleBuffer->getSampleRate() * mSampleBuffer->getChannelCount();
         if (sampleRate > 0) {
             return static_cast<float>(mCurSampleIndex) / sampleRate;
         } else {
@@ -115,12 +136,24 @@ public:
         }
     }
 
+    float getTotalLengthInSeconds() {
+        int32_t sampleRate = mSampleBuffer->getSampleRate() * mSampleBuffer->getChannelCount();
+        int32_t numSamples = mSampleBuffer->getNumSamples();
+        if (sampleRate > 0) {
+            return static_cast<float>(numSamples) / sampleRate;
+        } else {
+            LOGD("Invalid sample rate: %d", sampleRate);
+            return 0.0f;
+        }
+    }
+
+
+
 
 protected:
     SampleBuffer    *mSampleBuffer;
 
     int32_t mCurSampleIndex;
-    int32_t mCurSampleIndex2;
 
     bool mIsPlaying;
 

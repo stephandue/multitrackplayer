@@ -22,6 +22,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.IOException
+import kotlinx.coroutines.withContext
+
 
 
 class PlayerViewModel(application: Application): AndroidViewModel(application) {
@@ -43,16 +45,26 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
     private var audioSessionId: Int = 0
     private var equalizer: Equalizer? = null
 
+    var currentTimeInSeconds by mutableStateOf(0f)
+        private set
+
+    var totalLengthInSeconds by mutableStateOf(0f)
+        private set
+
+    var isDragging by mutableStateOf(false)
+        private set
+
+    var seekToTime by mutableStateOf(0f)
+
     init {
         println("init PlayerViewModel")
-        //ExoPlayerManager.initialize(getApplication())
-        //ExoPlayerManager.setMediaItem(getApplication())
         System.loadLibrary("drumthumper")
         openAudioManager()
         setupAudioStreamNative(2, audioSessionId)
         //loadWavAssets(getApplication())
         loadWavAssets(application.assets)
         startAudioStreamNative()
+        totalLengthInSeconds = getTotalLengthInSeconds(0)
         startSampleIndexLogging()
     }
 
@@ -94,36 +106,39 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
         job = CoroutineScope(Dispatchers.IO).launch {
             while (isActive) {
                 if (isSampleSourcePlaying(0)) {
-                    val timeInSconds = getCurrentTimeInSeconds(0)
-//                    Log.d(TAG, "Current Time In Seconds: $timeInSconds")
+                    val timeInSeconds = getCurrentTimeInSeconds(0)
+                    withContext(Dispatchers.Main) {
+                        currentTimeInSeconds = timeInSeconds
+                    }
                 }
                 delay(50)
             }
         }
     }
 
-    fun setPausedPositionToZero() {
-        //ExoPlayerManager.currentPlaybackPosition = 0
+    fun seekTo(newTime: Float) {
+        seekToTime = newTime
     }
 
+    fun onSeekStart() {
+        println("onSeekStart")
+        isDragging = true
+    }
+
+    fun onSeekEnd() {
+        println("onSeekEnd $seekToTime")
+        isDragging = false
+        setPlaybackTimeInSeconds(seekToTime)
+    }
+
+
     fun playPause() {
-        /*if (ExoPlayerManager.isPlaying){
-            ExoPlayerManager.pause()
-        } else {
-            ExoPlayerManager.play()
-        }*/
         if (isSamplePlaying(0)) {
             stopTrigger(0)
             // I only start one player here as the reference player, all the others will be started in SimpleMultiPlayer::triggerDown
-//            stopTrigger(1)
-//            stopTrigger(2)
-//            stopTrigger(3)
         } else {
             trigger(0)
             // I only stop one player here as the reference player, all the others will be started in SimpleMultiPlayer::triggerUp
-//            trigger(1)
-//            trigger(2)
-//            trigger(3)
         }
 
     }
@@ -131,32 +146,26 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
     fun updatePlayer1Volume(volume: Float) {
         player1Volume = volume
         setGain(0, volume)
-        //ExoPlayerManager.setPlayerVolume(1, volume)
     }
 
     fun updatePlayer2Volume(volume: Float) {
         player2Volume = volume
         setGain(1, volume)
-        //ExoPlayerManager.setPlayerVolume(2, volume)
     }
 
     fun updatePlayer3Volume(volume: Float) {
         player3Volume = volume
         setGain(2, volume)
-        //ExoPlayerManager.setPlayerVolume(3, volume)
     }
 
     fun updatePlayer4Volume(volume: Float) {
         player4Volume = volume
         setGain(3, volume)
-        //ExoPlayerManager.setPlayerVolume(4, volume)
     }
 
     fun updatePlayer5Volume(volume: Float) {
         player5Volume = volume
         setGain(4, volume)
-        //ExoPlayerManager.setPlayerVolume(5, volume)
-
     }
 
     fun loadWavAssets(assetMgr: AssetManager) {
@@ -166,8 +175,6 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
         loadWavAsset(assetMgr, "3.wav", 2, 0f)
         loadWavAsset(assetMgr, "4.wav", 3, 0f)
         loadWavAsset(assetMgr, "5.wav", 5, 0f)
-
-//        loadWavAsset(assetMgr, "3.wav", 0, 0f)
 
         //loadWavAsset(assetMgr, "bass.wav", 0, 0f)
         //loadWavAsset(assetMgr, "drums.wav", 1, 0f)
@@ -268,6 +275,10 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
 
     external fun getCurrentSampleIndex(index: Int): Int
     external fun getCurrentTimeInSeconds(index: Int): Float
+
+    external fun setPlaybackTimeInSeconds(newTime: Float)
+
+    external fun getTotalLengthInSeconds(index: Int): Float
 
     external fun getOutputReset() : Boolean
     external fun clearOutputReset()

@@ -323,13 +323,15 @@ float SimpleMultiPlayer::getCurrentTimeInSeconds(int index) {
     return mSampleSources[index]->getCurrentTimeInSeconds();
 }
 
-/*float SimpleMultiPlayer::getTotalLengthInSeconds() {
-    float totalLength = 0.0f;
-    for (int32_t bufferIndex = 0; bufferIndex < mNumSampleBuffers; bufferIndex++) {
-        totalLength += mSampleSources[bufferIndex]->getTotalLengthInSeconds();
+    void SimpleMultiPlayer::setCurrentTimeInSeconds(float newTime) {
+        for (int32_t i = 0; i < mNumSampleBuffers; ++i) {
+            mSampleSources[i]->setCurrentTimeInSeconds(newTime);
+        }
     }
-    return totalLength;
-}*/
+
+    float SimpleMultiPlayer::getTotalLengthInSeconds(int index) {
+        return mSampleSources[index]->getTotalLengthInSeconds();
+    }
 
     void SimpleMultiPlayer::setTempo(float tempo) {
         mCurrentTempo = tempo;

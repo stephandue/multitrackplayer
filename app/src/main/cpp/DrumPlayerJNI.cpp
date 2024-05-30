@@ -172,6 +172,16 @@ JNIEXPORT jfloat JNICALL Java_com_stephanduechtel_multitrackplayer_PlayerViewMod
     return sDTPlayer.getCurrentTimeInSeconds(index);
 }
 
+JNIEXPORT void JNICALL Java_com_stephanduechtel_multitrackplayer_PlayerViewModel_setPlaybackTimeInSeconds(
+        JNIEnv *env, jobject thiz, jfloat newTime) {
+    sDTPlayer.setCurrentTimeInSeconds(newTime);
+}
+
+JNIEXPORT jfloat JNICALL Java_com_stephanduechtel_multitrackplayer_PlayerViewModel_getTotalLengthInSeconds(
+        JNIEnv *env, jobject thiz, jint index) {
+    return sDTPlayer.getTotalLengthInSeconds(index);
+}
+
 JNIEXPORT jboolean JNICALL Java_com_stephanduechtel_multitrackplayer_PlayerViewModel_isSampleSourcePlaying(
         JNIEnv* env, jobject, jint index) {
     if (index < sDTPlayer.mNumSampleBuffers) {

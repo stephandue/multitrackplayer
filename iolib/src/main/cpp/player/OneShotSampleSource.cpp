@@ -42,7 +42,7 @@ void OneShotSampleSource::mixAudio(float* outBuff, int numChannels, int32_t numF
             int32_t framesToAdd = desiredSoundTouchBuffer - mSoundTouch.numSamples();
             if (framesToAdd < (samplesLeft / sampleChannels)) {
                 adjustedWriteFrames = adjustedWriteFrames + framesToAdd;
-                LOGD("added %d frames to the buffer", framesToAdd);
+                LOGD("added %d frames to the buffer, sampleChannels: %d", framesToAdd, sampleChannels);
             }
         }
 
