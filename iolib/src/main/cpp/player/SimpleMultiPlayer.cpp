@@ -219,27 +219,17 @@ void SimpleMultiPlayer::unloadSampleData() {
 
 void SimpleMultiPlayer::triggerDown(int32_t index) {
     LOGD("triggerDown");
-    std::thread([this]() {
+    int32_t referenceSampleIndex = mSampleSources[0]->getCurrentSampleIndex();  //mSampleRate * 10;
+    std::thread([this, referenceSampleIndex]() {
         for (int32_t i = 0; i < mNumSampleBuffers; ++i) {
-            int32_t sampleIndex = mSampleSources[i]->getCurrentSampleIndex();; // mSampleSources[i]->getCurrentSampleIndex(); //mSampleRate * 10;
-            mSampleSources[i]->setPlayMode(sampleIndex);
+            LOGD("totalLenght: trigger");
+            mSampleSources[i]->setPlayMode(referenceSampleIndex);
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         fadeGain(1.0f, 180);
     }).detach();
 }
 
-    void SimpleMultiPlayer::triggerUpAndRightDown(int32_t index) {
-        LOGD("triggerUpAndRightDown");
-        std::thread([this]() {
-            fadeGain(0.0f, 180);
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
-            for (int32_t i = 0; i < mNumSampleBuffers; ++i) {
-                mSampleSources[i]->setStopMode();
-            }
-            triggerDown(0);
-        }).detach();
-    }
 
 void SimpleMultiPlayer::triggerUp(int32_t index) {
     LOGD("triggerUp");

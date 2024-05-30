@@ -62,16 +62,20 @@ public:
 
     //void setPlayMode() { mCurSampleIndex = 0; mIsPlaying = true; }
     void setPlayMode(int32_t sampleIndex) {
-        // Ensure that the sample index is within the valid range.
-//        if (sampleIndex < 0) {
-//            sampleIndex = 0;
-//        }
+        // Adjust the sampleIndex for ClickTrack (Mono) because sampleIndex is take from the reference track which is stereo
+        int32_t channelCount = mSampleBuffer->getChannelCount();
+        if (channelCount == 1) {
+            sampleIndex = sampleIndex / 2;
+        }
         // Set the current sample index and playback flag.
         mSoundTouch.clear();
         mCurSampleIndex = sampleIndex;
         mIsPlaying = true;
     }
-    void setStopMode() { mIsPlaying = false; }
+    void setStopMode() {
+        mIsPlaying = false;
+        mSoundTouch.clear();
+    }
 
     bool isPlaying() { return mIsPlaying; }
 
