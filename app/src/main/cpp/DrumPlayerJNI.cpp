@@ -45,9 +45,9 @@ static SimpleMultiPlayer sDTPlayer;
  * Native (JNI) implementation of DrumPlayer.setupAudioStreamNative()
  */
 JNIEXPORT void JNICALL Java_com_stephanduechtel_multitrackplayer_PlayerViewModel_setupAudioStreamNative(
-        JNIEnv* env, jobject, jint numChannels, jint audioSessionId) {
+        JNIEnv* env, jobject, jint numChannels) {
     __android_log_print(ANDROID_LOG_INFO, TAG, "%s", "init()");
-    sDTPlayer.setupAudioStream(numChannels, audioSessionId);  // Pass audioSessionId to SimpleMultiPlayer
+    sDTPlayer.setupAudioStream(numChannels);  // Pass audioSessionId to SimpleMultiPlayer
 }
 
 JNIEXPORT void JNICALL

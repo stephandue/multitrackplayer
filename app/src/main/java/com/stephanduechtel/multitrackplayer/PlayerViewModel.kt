@@ -42,8 +42,6 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
     val GAIN_FACTOR = 100.0f
 
     private var job: Job? = null
-    private var audioSessionId: Int = 0
-    private var equalizer: Equalizer? = null
 
     var currentTimeInSeconds by mutableStateOf(0f)
         private set
@@ -57,10 +55,9 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
     var seekToTime by mutableStateOf(0f)
 
     init {
-        println("init PlayerViewModel")
+        println("+++ init PlayerViewModel")
         System.loadLibrary("drumthumper")
-        openAudioManager()
-        setupAudioStreamNative(2, audioSessionId)
+        setupAudioStreamNative(2)
         //loadWavAssets(getApplication())
         loadWavAssets(application.assets)
         startAudioStreamNative()
@@ -70,31 +67,8 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
 
     override fun onCleared() {
         super.onCleared()
+        println("+++ onCleared")
         job?.cancel()
-        releaseAudioEffects()
-    }
-
-    fun openAudioManager() {
-        val audioManager = getApplication<Application>().getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        audioSessionId = audioManager.generateAudioSessionId()
-        Log.d(TAG, "Generated Audio Session ID: $audioSessionId")
-        applyAudioEffects()
-    }
-
-    private fun applyAudioEffects() {
-        equalizer = Equalizer(0, audioSessionId).apply {
-            enabled = false // set to true to enable the equalizer
-            val bandCount = numberOfBands
-            for (i in 0 until bandCount) {
-                val lowerBandLevel = getBandLevelRange()[0]
-                setBandLevel(i.toShort(), lowerBandLevel) // Set each band to its minimum value for a noticeable effect
-            }
-        }
-        Log.d(TAG, "Equalizer effect applied with all bands set to minimum")
-    }
-
-    private fun releaseAudioEffects() {
-        equalizer?.release()
     }
 
     private fun gainPosToGainVal(pos: Int) : Float {
@@ -257,7 +231,7 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
         return isSampleSourcePlaying(index)
     }
 
-    private external fun setupAudioStreamNative(numChannels: Int, audioSessionId: Int)
+    private external fun setupAudioStreamNative(numChannels: Int)
     private external fun startAudioStreamNative()
     private external fun teardownAudioStreamNative()
 
