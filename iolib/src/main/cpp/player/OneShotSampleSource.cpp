@@ -34,6 +34,7 @@ void OneShotSampleSource::mixAudio(float* outBuff, int numChannels, int32_t numF
 
     if (numWriteFrames != 0) {
 
+
         int32_t adjustedWriteFrames = static_cast<int32_t>(std::round(numWriteFrames / mSoundTouch.getInputOutputSampleRatio()));
 
         // TODO make sure this is triggered for all samples sources otherwise they get out of sync! check if mSoundTouch.numSamples() can vary between the sample sources
@@ -42,20 +43,20 @@ void OneShotSampleSource::mixAudio(float* outBuff, int numChannels, int32_t numF
             int32_t framesToAdd = desiredSoundTouchBuffer - mSoundTouch.numSamples();
             if (framesToAdd < (samplesLeft / sampleChannels)) {
                 adjustedWriteFrames = adjustedWriteFrames + framesToAdd;
-                LOGD("added %d frames to the buffer, sampleChannels: %d", framesToAdd, sampleChannels);
+//                LOGD("added %d frames to the buffer, sampleChannels: %d, mSoundTouch.numSamples(): %d", framesToAdd, sampleChannels, mSoundTouch.numSamples());
             }
         }
 
-        if (mSoundTouch.numSamples() < numWriteFrames) {
-            __android_log_print(ANDROID_LOG_ERROR, "OneShotSampleSource", "not enough frames from SoundTouch");
-            int extraFrames = numWriteFrames - mSoundTouch.numSamples();
-            LOGD("extraFrames: %d", extraFrames);
-        }
+//        if (mSoundTouch.numSamples() < numWriteFrames) {
+//            __android_log_print(ANDROID_LOG_ERROR, "OneShotSampleSource", "not enough frames from SoundTouch");
+//            int extraFrames = numWriteFrames - mSoundTouch.numSamples();
+//            LOGD("extraFrames: %d, sampleChannels: %d", extraFrames, sampleChannels);
+//        }
 
         // Check if samplesLeft / sampleChannels is less than adjustedWriteFrames
         if ((samplesLeft / sampleChannels) < adjustedWriteFrames) {
             adjustedWriteFrames = samplesLeft / sampleChannels;
-            LOGD("adjustedWriteFrames set to samplesLeft / sampleChannels: %d", adjustedWriteFrames);
+//            LOGD("adjustedWriteFrames set to samplesLeft / sampleChannels: %d", adjustedWriteFrames);
         }
 
         const float* data  = mSampleBuffer->getSampleData();

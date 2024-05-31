@@ -80,7 +80,7 @@ public:
     float getTotalLengthInSeconds(int index);
 
     float mCurrentTempo = 1.0f;
-    float mCurrentPitch;
+    float mCurrentPitch = 0.0f;
 
     void setTempo(float tempo);
     void setPitchSemiTones(float pitch);

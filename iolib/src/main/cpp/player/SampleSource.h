@@ -43,6 +43,7 @@ public:
     static constexpr float PAN_HARDLEFT = -1.0f;
     static constexpr float PAN_HARDRIGHT = 1.0f;
     static constexpr float PAN_CENTER = 0.0f;
+    soundtouch::SoundTouch mSoundTouch;
 
     SampleSource(SampleBuffer *sampleBuffer, float pan)
      : mSampleBuffer(sampleBuffer), mCurSampleIndex(0), mIsPlaying(false), mGain(1.0f) {
@@ -55,6 +56,8 @@ public:
     void setTempo(float tempo) {
         mSoundTouch.setTempo(tempo);
     }
+
+    float currentPitch = 0.0f;
 
     void setPitchSemiTones(float pitch) {
         mSoundTouch.setPitchSemiTones(pitch);
@@ -170,8 +173,6 @@ protected:
 
     // Overall gain
     float mGain;
-
-    soundtouch::SoundTouch mSoundTouch;
 
 
 private:

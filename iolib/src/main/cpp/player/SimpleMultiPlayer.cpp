@@ -67,12 +67,27 @@ DataCallbackResult SimpleMultiPlayer::MyDataCallback::onAudioReady(AudioStream *
     memset(audioData, 0, static_cast<size_t>(numFrames) * static_cast<size_t>
             (mParent->mChannelCount) * sizeof(float));
 
+    // Adjust Pitch if needed
+    if (mParent->mCurrentPitch != mParent->mSampleSources[0]->currentPitch) {
+        int32_t referenceSampleIndex = mParent->mSampleSources[0]->getCurrentSampleIndex() - mParent->mSampleSources[0]->mSoundTouch.numSamples();
+        for(int32_t index = 0; index < mParent->mNumSampleBuffers; index++) {
+            int32_t sampleChannels = mParent->mSampleBuffers[index]->getProperties().channelCount;
+            if (sampleChannels == 1){
+                referenceSampleIndex = referenceSampleIndex / 2;
+            }
+            mParent->mSampleSources[index]->currentPitch = mParent->mCurrentPitch;
+            mParent->mSampleSources[index]->mSoundTouch.clear();
+            mParent->mSampleSources[index]->setCurrentSampleIndex(referenceSampleIndex);
+            mParent->mSampleSources[index]->mSoundTouch.setPitchSemiTones(mParent->mCurrentPitch);
+        }
+
+    }
+
 
     // OneShotSampleSource* sources = mSampleSources.get();
     for(int32_t index = 0; index < mParent->mNumSampleBuffers; index++) {
         if (mParent->mSampleSources[index]->isPlaying()) {
-            mParent->mSampleSources[index]->mixAudio((float*)audioData, mParent->mChannelCount,
-                                                     numFrames);
+            mParent->mSampleSources[index]->mixAudio((float*)audioData, mParent->mChannelCount, numFrames);
         }
     }
 
@@ -333,8 +348,10 @@ float SimpleMultiPlayer::getCurrentTimeInSeconds(int index) {
 
     void SimpleMultiPlayer::setPitchSemiTones(float pitch) {
         mCurrentPitch = pitch;
+        int32_t referenceSampleIndex = mSampleSources[0]->getCurrentTimeInSeconds() + 0.5;
         for(int32_t index = 0; index < mNumSampleBuffers; index++) {
-            mSampleSources[index]->setPitchSemiTones(pitch);
+//            mSampleSources[index]->setCurrentTimeInSeconds(referenceSampleIndex);
+//            mSampleSources[index]->setPitchSemiTones(pitch);
         }
         __android_log_print(ANDROID_LOG_INFO, TAG, "Pitch set to: %f", pitch);
     }
