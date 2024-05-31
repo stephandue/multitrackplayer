@@ -72,6 +72,7 @@ public:
     float getPan(int index);
 
     void setGain(int index, float gain);
+    void setGainFromFade(int index, float gain);
     float getGain(int index);
 
     int32_t getCurrentSampleIndex(int index);
@@ -92,6 +93,8 @@ public:
     std::atomic<int> mFadeDurationMs{500};
 
     void fadeGain(float targetGain, int durationMs);
+    void fadeGainToStored(int durationMs);
+    std::vector<float> mInitialGains;
 
     std::unique_ptr<oboe::LatencyTuner> mLatencyTuner;
 

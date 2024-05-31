@@ -39,7 +39,7 @@ namespace iolib {
 constexpr int32_t kBufferSizeInBursts = 32; //32; // Use 2 bursts as the buffer size (double buffer)
 
 SimpleMultiPlayer::SimpleMultiPlayer()
-  : mChannelCount(0), mOutputReset(false), mSampleRate(0), mNumSampleBuffers(0)
+  : mChannelCount(0), mOutputReset(false), mSampleRate(0), mNumSampleBuffers(0), mInitialGains({})
 {}
 
 DataCallbackResult SimpleMultiPlayer::MyDataCallback::onAudioReady(AudioStream *oboeStream,
@@ -238,7 +238,8 @@ void SimpleMultiPlayer::triggerDown(int32_t index) {
             mSampleSources[i]->setPlayMode(referenceSampleIndex);
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        fadeGain(1.0f, 180);
+//        fadeGain(1.0f, 180);
+        fadeGainToStored(180);
     }).detach();
 }
 
@@ -259,6 +260,14 @@ void SimpleMultiPlayer::triggerUp(int32_t index) {
         mFading.store(true);
         mFadeDurationMs.store(durationMs);
 
+        // Store initial gains before fading to 0.0f
+        if (targetGain == 0.0f) {
+            mInitialGains.clear();
+            for (int i = 0; i < mNumSampleBuffers; ++i) {
+                mInitialGains.push_back(getGain(i));
+            }
+        }
+
         std::thread([this, targetGain]() {
             int steps = 300;
             int stepDuration = mFadeDurationMs.load() / steps;
@@ -272,20 +281,48 @@ void SimpleMultiPlayer::triggerUp(int32_t index) {
                 float progress = static_cast<float>(step) / steps;
                 for (int i = 0; i < mNumSampleBuffers; ++i) {
                     float newGain = initialGains[i] + progress * (targetGain - initialGains[i]);
-                    setGain(i, newGain);
+                    setGainFromFade(i, newGain);
                 }
                 std::this_thread::sleep_for(std::chrono::milliseconds(stepDuration));
             }
 
             for (int i = 0; i < mNumSampleBuffers; ++i) {
-                setGain(i, targetGain);
+                setGainFromFade(i, targetGain);
             }
             mFading.store(false);
         }).detach();
     }
 
+    void SimpleMultiPlayer::fadeGainToStored(int durationMs) {
+        mFading.store(true);
+        mFadeDurationMs.store(durationMs);
 
-void SimpleMultiPlayer::resetAll() {
+        std::thread([this]() {
+            int steps = 300;
+            int stepDuration = mFadeDurationMs.load() / steps;
+
+            for (int step = 0; step < steps; ++step) {
+                float progress = static_cast<float>(step) / steps;
+                for (int i = 0; i < mNumSampleBuffers; ++i) {
+                    float initialGain = (i < mInitialGains.size()) ? mInitialGains[i] : 1.0f;
+                    float newGain = initialGain * progress;
+                    setGainFromFade(i, newGain);
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(stepDuration));
+            }
+
+            for (int i = 0; i < mNumSampleBuffers; ++i) {
+                float initialGain = (i < mInitialGains.size()) ? mInitialGains[i] : 1.0f;
+                setGainFromFade(i, initialGain);
+            }
+            mInitialGains.clear();
+            mFading.store(false);
+        }).detach();
+    }
+
+
+
+    void SimpleMultiPlayer::resetAll() {
     for (int32_t bufferIndex = 0; bufferIndex < mNumSampleBuffers; bufferIndex++) {
         mSampleSources[bufferIndex]->setStopMode();
     }
@@ -311,7 +348,25 @@ void SimpleMultiPlayer::setGain(int index, float gain) {
         return; // or handle the error appropriately
     }
     mSampleSources[index]->setGain(gain);
+    // Check if the index exists in mInitialGains and update it if so
+    if (index < mInitialGains.size()) {
+        mInitialGains[index] = gain;
+    }
 }
+
+    void SimpleMultiPlayer::setGainFromFade(int index, float gain) {
+        // Check if the index is within bounds
+        if (index < 0 || index >= mSampleSources.size()) {
+            __android_log_print(ANDROID_LOG_ERROR, TAG, "Index out of bounds: %d", index);
+            return; // or handle the error appropriately
+        }
+        // Check if the element at the index is not null
+        if (mSampleSources[index] == nullptr) {
+            __android_log_print(ANDROID_LOG_ERROR, TAG, "Sample source at index %d is null", index);
+            return; // or handle the error appropriately
+        }
+        mSampleSources[index]->setGain(gain);
+    }
 
 float SimpleMultiPlayer::getGain(int index) {
     return mSampleSources[index]->getGain();
