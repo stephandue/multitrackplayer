@@ -69,6 +69,8 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
         super.onCleared()
         println("+++ onCleared")
         job?.cancel()
+        unloadWavAssetsNative()
+        teardownAudioStreamNative()
     }
 
     private fun gainPosToGainVal(pos: Int) : Float {
