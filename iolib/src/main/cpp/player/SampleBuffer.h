@@ -36,6 +36,7 @@ public:
 
     // Data load/unload
     void loadSampleData(parselib::WavStreamReader* reader);
+    void loadRawSampleData(const int16_t* data, int32_t numSamples, int32_t numChannels, int32_t sampleRate);
     void unloadSampleData();
 
     void resampleData(int sampleRate);

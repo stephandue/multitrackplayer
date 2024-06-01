@@ -27,6 +27,9 @@ set (IOLIB_DIR ../../../../iolib)
 # Pull in soundtouch
 set (SOUNDTOUCH_DIR ../../../../soundtouch)
 
+# Pull in minimp3
+set (MINIMP3_DIR ../../../../minimp3)
+
 # Set the path to the Oboe library directory
 set (OBOE_DIR ../../../../oboe)
 #message("OBOE_DIR = " + ${OBOE_DIR})
@@ -39,20 +42,19 @@ include_directories(
         ${OBOE_DIR}/include
         ${CMAKE_CURRENT_LIST_DIR}
         ${SOUNDTOUCH_DIR}/include
+        ${PARSELIB_DIR}/src/main/cpp
+        ${IOLIB_DIR}/src/main/cpp
+        ${MINIMP3_DIR}
 )
 
 include(${PARSELIB_DIR}/src/main/cpp/CMakeLists.txt)
 include(${IOLIB_DIR}/src/main/cpp/CMakeLists.txt)
 
-# Include the WavLib headers and shared sample code
-include_directories(
-        ${PARSELIB_DIR}/src/main/cpp
-        ${IOLIB_DIR}/src/main/cpp
-)
 
 # App specific sources
 set (APP_SOURCES
         DrumPlayerJNI.cpp
+        minimp3_wrapper.cpp
         )
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Ofast") #recommended here: https://medium.com/@donturner/debugging-audio-glitches-on-android-ed10782f9c64

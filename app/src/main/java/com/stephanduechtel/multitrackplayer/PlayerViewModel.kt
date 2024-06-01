@@ -23,7 +23,11 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.IOException
 import kotlinx.coroutines.withContext
-
+import java.io.File
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 
 
 class PlayerViewModel(application: Application): AndroidViewModel(application) {
@@ -57,12 +61,7 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
     init {
         println("+++ init PlayerViewModel")
         System.loadLibrary("drumthumper")
-        setupAudioStreamNative(2)
-        //loadWavAssets(getApplication())
-        loadWavAssets(application.assets)
-        startAudioStreamNative()
-        totalLengthInSeconds = getTotalLengthInSeconds(0)
-        startSampleIndexLogging()
+        checkIfDirectoryExists()
     }
 
     override fun onCleared() {
@@ -71,6 +70,120 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
         job?.cancel()
         unloadWavAssetsNative()
         teardownAudioStreamNative()
+    }
+
+    fun initAudioPlayers() {
+        setupAudioStreamNative(2)
+        //loadWavAssets(getApplication())
+        //loadWavAssets(application.assets)
+        loadMp3Assets()
+
+    }
+
+    fun checkIfDirectoryExists() {
+        val fileManager = File(getApplication<Application>().filesDir, "documents")
+        val documentsDirectory = File(fileManager, "song")
+        val directoryPath = documentsDirectory.path
+
+        //return
+
+        if (documentsDirectory.exists() && documentsDirectory.isDirectory) {
+            try {
+                val files = documentsDirectory.listFiles()?.map { it.name } ?: emptyList()
+                val desiredFiles = listOf("bass.mp3", "vocals.mp3", "drums.mp3", "other.mp3")
+                val containsAllDesiredFiles = desiredFiles.all { it in files }
+                val clickFiles = listOf("click.mp3", "clickonset.mp3")
+                val containsAllClickFiles = clickFiles.all { it in files }
+
+                if (containsAllDesiredFiles && containsAllClickFiles) {
+                    // All desired files are present in the folder
+                    initAudioPlayers()
+                } else if (containsAllDesiredFiles && !containsAllClickFiles) {
+                    initAudioPlayers()
+                    println("+++ containsAllDesiredFiles")
+                    //downloadClickTracksAfterStemsAreStored()
+                } else {
+                    // Not all desired files are present in the folder
+                    downloadFiles { success ->
+                        if (success) {
+                            println("All files downloaded successfully.")
+                            initAudioPlayers()
+                        } else {
+                            println("Failed to download files.")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                println("Error listing files in folder: ${e.message}")
+            }
+        } else {
+            try {
+                documentsDirectory.mkdirs()
+                // Directory created
+                downloadFiles { success ->
+                    if (success) {
+                        println("All files downloaded successfully.")
+                        initAudioPlayers()
+                    } else {
+                        println("Failed to download files.")
+                    }
+                }
+            } catch (e: Exception) {
+                println("Error creating directory: ${e.message}")
+            }
+        }
+    }
+
+    fun downloadFiles(completionHandler: (Boolean) -> Unit) {
+        val documentsDirectory = File(getApplication<Application>().filesDir, "documents")
+        val localURLBass = File(documentsDirectory, "song/bass.mp3")
+        val localURLDrums = File(documentsDirectory, "song/drums.mp3")
+        val localURLOther = File(documentsDirectory, "song/other.mp3")
+        val localURLVocals = File(documentsDirectory, "song/vocals.mp3")
+        val localURLClick = File(documentsDirectory, "song/click.mp3")
+
+        val urls = mapOf(
+            "https://www.fiveloop.io/bass.mp3" to localURLBass,
+            "https://www.fiveloop.io/drums.mp3" to localURLDrums,
+            "https://www.fiveloop.io/other.mp3" to localURLOther,
+            "https://www.fiveloop.io/vocals.mp3" to localURLVocals,
+            "https://www.fiveloop.io/click.mp3" to localURLClick
+        )
+
+        // Create the documents directory if it does not exist
+        if (!documentsDirectory.exists()) {
+            documentsDirectory.mkdirs()
+        }
+
+        val client = OkHttpClient()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            var allDownloadsSuccessful = true
+
+            for ((url, file) in urls) {
+                val request = Request.Builder().url(url).build()
+
+                try {
+                    client.newCall(request).execute().use { response ->
+                        if (!response.isSuccessful) throw IOException("Failed to download file: $url")
+
+                        response.body?.byteStream()?.let { inputStream ->
+                            file.outputStream().use { outputStream ->
+                                inputStream.copyTo(outputStream)
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    allDownloadsSuccessful = false
+                    break
+                }
+            }
+
+            withContext(Dispatchers.Main) {
+                completionHandler(allDownloadsSuccessful)
+            }
+        }
     }
 
     private fun gainPosToGainVal(pos: Int) : Float {
@@ -159,14 +272,27 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
 
     }
 
-    /*fun loadWavAssets(context: Context) {
-        loadWavAsset(context, R.raw.bass, 0, 0f)
-        loadWavAsset(context, R.raw.drums, 1, 0f)
-        loadWavAsset(context, R.raw.other, 2, 0f)
-        loadWavAsset(context, R.raw.vocals, 3, 0f)
-        loadWavAsset(context, R.raw.click, 4, 0f)
+    fun loadMp3Assets() {
+        val documentsDirectory = File(getApplication<Application>().filesDir, "documents")
+        val localURLBass = File(documentsDirectory, "song/bass.mp3").absolutePath
+        val localURLDrums = File(documentsDirectory, "song/drums.mp3").absolutePath
+        val localURLOther = File(documentsDirectory, "song/other.mp3").absolutePath
+        val localURLVocals = File(documentsDirectory, "song/vocals.mp3").absolutePath
+        val localURLClick = File(documentsDirectory, "song/click.mp3").absolutePath
 
-    }*/
+        val filePaths = listOf(localURLBass, localURLDrums, localURLOther, localURLVocals, localURLClick)
+
+        loadMultipleMp3Assets(filePaths, 0.0f) { success ->
+            if (success) {
+                println("All MP3 files loaded successfully.")
+                startAudioStreamNative()
+                totalLengthInSeconds = getTotalLengthInSeconds(0)
+                startSampleIndexLogging()
+            } else {
+                println("Failed to load one or more MP3 files.")
+            }
+        }
+    }
 
     fun unloadWavAssets() {
         unloadWavAssetsNative()
@@ -186,20 +312,6 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
-    /*private fun loadWavAsset(context: Context, resId: Int, index: Int, pan: Float) {
-        try {
-            Log.i(TAG, "Loading WAV asset with resource ID: $resId")
-            val inputStream = context.resources.openRawResource(resId)
-            val dataBytes = inputStream.readBytes()
-            Log.i(TAG, "Loaded ${dataBytes.size} bytes for WAV asset")
-            loadWavAssetNative(dataBytes, index, pan)
-            inputStream.close()
-        } catch (ex: IOException) {
-            Log.i(TAG, "IOException$ex")
-        } catch (ex: Exception) {
-            Log.e(TAG, "Unexpected exception while loading WAV asset: $ex")
-        }
-    }*/
 
     // Function to decrease the tempo by 0.1
     fun tempoDown() {
@@ -231,6 +343,29 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
 
     fun isSamplePlaying(index: Int): Boolean {
         return isSampleSourcePlaying(index)
+    }
+
+    fun loadMultipleMp3Assets(filePaths: List<String>, pan: Float, completionHandler: (Boolean) -> Unit) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val deferredResults = filePaths.mapIndexed { index, filePath ->
+                async {
+                    try {
+                        loadMp3AssetNative(filePath, index, pan)
+                        true
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        false
+                    }
+                }
+            }
+
+            val results = deferredResults.awaitAll()
+            val allSuccessful = results.all { it }
+
+            withContext(Dispatchers.Main) {
+                completionHandler(allSuccessful)
+            }
+        }
     }
 
     private external fun setupAudioStreamNative(numChannels: Int)
@@ -266,6 +401,7 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
     external fun setPitchSemiTonesNative(pitch: Float)
     external fun getTempoNative(): Float
     external fun getPitchSemiTonesNative(): Float
+    external fun loadMp3AssetNative(filePath: String, index: Int, pan: Float)
 
 }
 

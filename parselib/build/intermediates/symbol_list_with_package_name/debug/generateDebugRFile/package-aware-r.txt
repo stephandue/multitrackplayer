@@ -1,2 +1,0 @@
-com.stephanduechtel.parselib
-string app_name

@@ -29,6 +29,9 @@
 #include <player/OneShotSampleSource.h>
 #include <player/SimpleMultiPlayer.h>
 
+#include "minimp3.h"
+#include "minimp3_ex.h"
+
 static const char* TAG = "DrumPlayerJNI";
 
 // JNI functions are "C" calling convention
@@ -93,6 +96,30 @@ JNIEXPORT void JNICALL Java_com_stephanduechtel_multitrackplayer_PlayerViewModel
     sDTPlayer.addSampleSource(source, sampleBuffer);
 
     delete[] buf;
+}
+
+JNIEXPORT void JNICALL Java_com_stephanduechtel_multitrackplayer_PlayerViewModel_loadMp3AssetNative(
+        JNIEnv *env, jobject, jstring filePath, jint index, jfloat pan) {
+    const char *nativeFilePath = env->GetStringUTFChars(filePath, nullptr);
+
+    mp3dec_t mp3d;
+    mp3dec_file_info_t info;
+    mp3dec_init(&mp3d);
+
+    if (mp3dec_load(&mp3d, nativeFilePath, &info, NULL, NULL)) {
+        __android_log_print(ANDROID_LOG_ERROR, "SimpleMultiPlayer", "Failed to load MP3 file");
+        env->ReleaseStringUTFChars(filePath, nativeFilePath);
+        return;
+    }
+
+    SampleBuffer* sampleBuffer = new SampleBuffer();
+    sampleBuffer->loadRawSampleData(info.buffer, info.samples / info.channels, info.channels, info.hz);
+
+    OneShotSampleSource* source = new OneShotSampleSource(sampleBuffer, pan);
+    sDTPlayer.addSampleSource(source, sampleBuffer);
+
+    free(info.buffer);
+    env->ReleaseStringUTFChars(filePath, nativeFilePath);
 }
 
 /**

@@ -41,6 +41,17 @@ void SampleBuffer::loadSampleData(parselib::WavStreamReader* reader) {
     reader->getDataFloat(mSampleData, reader->getNumSampleFrames());
 }
 
+    void SampleBuffer::loadRawSampleData(const int16_t* data, int32_t numSamples, int32_t numChannels, int32_t sampleRate) {
+        mAudioProperties.channelCount = numChannels;
+        mAudioProperties.sampleRate = sampleRate;
+        mNumSamples = numSamples * numChannels;
+
+        mSampleData = new float[mNumSamples];
+        for (int32_t i = 0; i < mNumSamples; ++i) {
+            mSampleData[i] = data[i] / 32768.0f; // Convert from int16_t to float
+        }
+    }
+
 void SampleBuffer::unloadSampleData() {
     if (mSampleData != nullptr) {
         delete[] mSampleData;
