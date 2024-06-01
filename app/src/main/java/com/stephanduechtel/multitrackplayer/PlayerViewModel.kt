@@ -34,6 +34,8 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
 
     val TAG: String = "DrumPlayer"
 
+    data class Mp3File(val filePath: String, val index: Int)
+
     var player1Volume by mutableStateOf(1f)
     var player2Volume by mutableStateOf(1f)
     var player3Volume by mutableStateOf(1f)
@@ -280,9 +282,15 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
         val localURLVocals = File(documentsDirectory, "song/vocals.mp3").absolutePath
         val localURLClick = File(documentsDirectory, "song/click.mp3").absolutePath
 
-        val filePaths = listOf(localURLBass, localURLDrums, localURLOther, localURLVocals, localURLClick)
+        val mp3Files = listOf(
+            Mp3File(localURLBass, 0),
+            Mp3File(localURLDrums, 1),
+            Mp3File(localURLOther, 2),
+            Mp3File(localURLVocals, 3),
+            Mp3File(localURLClick, 4)
+        )
 
-        loadMultipleMp3Assets(filePaths, 0.0f) { success ->
+        loadMultipleMp3Assets(mp3Files, 0.0f) { success ->
             if (success) {
                 println("All MP3 files loaded successfully.")
                 startAudioStreamNative()
@@ -345,22 +353,24 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
         return isSampleSourcePlaying(index)
     }
 
-    fun loadMultipleMp3Assets(filePaths: List<String>, pan: Float, completionHandler: (Boolean) -> Unit) {
+    fun loadMultipleMp3Assets(mp3Files: List<Mp3File>, pan: Float, completionHandler: (Boolean) -> Unit) {
         CoroutineScope(Dispatchers.IO).launch {
-            val deferredResults = filePaths.mapIndexed { index, filePath ->
-                async {
-                    try {
-                        loadMp3AssetNative(filePath, index, pan)
-                        true
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        false
-                    }
+            var allSuccessful = true
+
+            for (mp3File in mp3Files) {
+                val success = try {
+                    loadMp3AssetNative(mp3File.filePath, mp3File.index, pan)
+                    true
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    false
+                }
+
+                if (!success) {
+                    allSuccessful = false
+                    break
                 }
             }
-
-            val results = deferredResults.awaitAll()
-            val allSuccessful = results.all { it }
 
             withContext(Dispatchers.Main) {
                 completionHandler(allSuccessful)
