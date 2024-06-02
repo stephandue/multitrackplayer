@@ -69,7 +69,7 @@ DataCallbackResult SimpleMultiPlayer::MyDataCallback::onAudioReady(AudioStream *
 
     // Adjust Pitch if needed
     if (mParent->mCurrentPitch != mParent->mSampleSources[0]->currentPitch) {
-        int32_t referenceSampleIndex = mParent->mSampleSources[0]->getCurrentSampleIndex() - mParent->mSampleSources[0]->mSoundTouch.numSamples();
+        int32_t referenceSampleIndex = mParent->mSampleSources[0]->getCurrentSampleIndex() - (mParent->mSampleSources[0]->mSoundTouch.numSamples()*2);
         for(int32_t index = 0; index < mParent->mNumSampleBuffers; index++) {
             int32_t sampleChannels = mParent->mSampleBuffers[index]->getProperties().channelCount;
             if (sampleChannels == 1){
