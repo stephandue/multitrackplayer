@@ -78,7 +78,12 @@ DataCallbackResult SimpleMultiPlayer::MyDataCallback::onAudioReady(AudioStream *
             mParent->mSampleSources[index]->currentPitch = mParent->mCurrentPitch;
             mParent->mSampleSources[index]->mSoundTouch.clear();
             mParent->mSampleSources[index]->setCurrentSampleIndex(referenceSampleIndex);
-            mParent->mSampleSources[index]->mSoundTouch.setPitchSemiTones(mParent->mCurrentPitch);
+            // Dont change Pitch for Click Tracks
+            if (index == 4 || index == 5) {
+                mParent->mSampleSources[index]->mSoundTouch.setPitchSemiTones(0.0f);
+            } else {
+                mParent->mSampleSources[index]->mSoundTouch.setPitchSemiTones(mParent->mCurrentPitch);
+            }
         }
 
     }
