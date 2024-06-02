@@ -293,6 +293,8 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
         loadMultipleMp3Assets(mp3Files, 0.0f) { success ->
             if (success) {
                 println("All MP3 files loaded successfully.")
+                val indexesToIgnore = intArrayOf(1, 4, 5) // 1 decides if drums should be pitched or not
+                setIgnorePitchIndexesNative(indexesToIgnore)
                 startAudioStreamNative()
                 totalLengthInSeconds = getTotalLengthInSeconds(0)
                 startSampleIndexLogging()
@@ -412,6 +414,7 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
     external fun getTempoNative(): Float
     external fun getPitchSemiTonesNative(): Float
     external fun loadMp3AssetNative(filePath: String, index: Int, pan: Float)
+    external fun setIgnorePitchIndexesNative(indexes: IntArray)
 
 }
 

@@ -78,8 +78,8 @@ DataCallbackResult SimpleMultiPlayer::MyDataCallback::onAudioReady(AudioStream *
             mParent->mSampleSources[index]->currentPitch = mParent->mCurrentPitch;
             mParent->mSampleSources[index]->mSoundTouch.clear();
             mParent->mSampleSources[index]->setCurrentSampleIndex(referenceSampleIndex);
-            // Dont change Pitch for Click Tracks
-            if (index == 4 || index == 5) {
+            // Check if index should ignore pitch
+            if (std::find(mParent->mIgnorePitchIndexes.begin(), mParent->mIgnorePitchIndexes.end(), index) != mParent->mIgnorePitchIndexes.end()) {
                 mParent->mSampleSources[index]->mSoundTouch.setPitchSemiTones(0.0f);
             } else {
                 mParent->mSampleSources[index]->mSoundTouch.setPitchSemiTones(mParent->mCurrentPitch);
@@ -421,5 +421,8 @@ float SimpleMultiPlayer::getCurrentTimeInSeconds(int index) {
         return mCurrentPitch;
     }
 
+    void SimpleMultiPlayer::setIgnorePitchIndexes(const std::vector<int32_t>& indexes) {
+        mIgnorePitchIndexes = indexes;
+    }
 
 }

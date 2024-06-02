@@ -241,6 +241,18 @@ JNIEXPORT jfloat JNICALL Java_com_stephanduechtel_multitrackplayer_PlayerViewMod
     return sDTPlayer.getPitchSemiTones();
 }
 
+JNIEXPORT void JNICALL Java_com_stephanduechtel_multitrackplayer_PlayerViewModel_setIgnorePitchIndexesNative(
+        JNIEnv* env, jobject, jintArray indexes) {
+    jsize length = env->GetArrayLength(indexes);
+    jint* elements = env->GetIntArrayElements(indexes, 0);
+
+    std::vector<int32_t> ignorePitchIndexes(elements, elements + length);
+    sDTPlayer.setIgnorePitchIndexes(ignorePitchIndexes);
+
+    env->ReleaseIntArrayElements(indexes, elements, 0);
+}
+
+
 #ifdef __cplusplus
 }
 #endif

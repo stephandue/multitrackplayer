@@ -100,6 +100,9 @@ public:
 
     soundtouch::SoundTouch mSoundTouch;
 
+    std::vector<int32_t> mIgnorePitchIndexes;
+    void setIgnorePitchIndexes(const std::vector<int32_t>& indexes);
+
 // Sample Data
 int32_t mNumSampleBuffers;
     std::vector<SampleSource*>  mSampleSources;
@@ -145,8 +148,6 @@ private:
 
     std::shared_ptr<MyDataCallback> mDataCallback;
     std::shared_ptr<MyErrorCallback> mErrorCallback;
-
-    bool stopFeeding;
 
 };
 
