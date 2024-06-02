@@ -157,6 +157,17 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
                             TextButton(label = "Pitch Down", onClick = { viewModel.pitchDown() })
                             TextButton(label = "Pitch Up", onClick = { viewModel.pitchUp() })
                         }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 5.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            TextButton(label = "Loop", onClick = { viewModel.loop() })
+                        }
+
                     }
                 }
             }

@@ -60,6 +60,17 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
 
     var seekToTime by mutableStateOf(0f)
 
+    // State variable
+    var loopState: LoopState = LoopState.Inactive
+        private set
+
+    // Time variables
+    var loopIn: Float = 0f
+        private set
+
+    var loopOut: Float = 0f
+        private set
+
     init {
         println("+++ init PlayerViewModel")
         System.loadLibrary("drumthumper")
@@ -198,11 +209,34 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
                     val timeInSeconds = getCurrentTimeInSeconds(0)
                     withContext(Dispatchers.Main) {
                         currentTimeInSeconds = timeInSeconds
+                        if (loopState == LoopState.Active && currentTimeInSeconds >= loopOut) {
+                            setPlaybackTimeInSeconds(loopIn)
+                        }
                     }
                 }
                 delay(50)
             }
         }
+    }
+
+    fun loop() {
+        when (loopState) {
+            is LoopState.Inactive -> {
+                loopState = LoopState.Pending
+                loopIn = getCurrentTimeInSeconds(0)
+            }
+            is LoopState.Pending -> {
+                loopState = LoopState.Active
+                loopOut = getCurrentTimeInSeconds(0)
+            }
+            is LoopState.Active -> {
+                loopState = LoopState.Inactive
+            }
+        }
+        // Print statements for debugging
+        println("Loop state changed to: $loopState")
+        println("LoopIn time: $loopIn")
+        println("LoopOut time: $loopOut")
     }
 
     fun seekTo(newTime: Float) {
@@ -380,6 +414,12 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
     external fun loadMp3AssetNative(filePath: String, index: Int, pan: Float)
     external fun setIgnorePitchIndexesNative(indexes: IntArray)
 
+}
+
+sealed class LoopState {
+    object Inactive : LoopState()
+    object Pending : LoopState()
+    object Active : LoopState()
 }
 
 class PlayerViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
