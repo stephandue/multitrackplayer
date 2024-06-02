@@ -76,8 +76,6 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
 
     fun initAudioPlayers() {
         setupAudioStreamNative(2)
-        //loadWavAssets(getApplication())
-        //loadWavAssets(application.assets)
         loadMp3Assets()
 
     }
@@ -259,21 +257,6 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
         setGain(4, volume)
     }
 
-    fun loadWavAssets(assetMgr: AssetManager) {
-
-        loadWavAsset(assetMgr, "1.wav", 0, 0f)
-        loadWavAsset(assetMgr, "2.wav", 1, 0f)
-        loadWavAsset(assetMgr, "3.wav", 2, 0f)
-        loadWavAsset(assetMgr, "4.wav", 3, 0f)
-        loadWavAsset(assetMgr, "5.wav", 5, 0f)
-
-        //loadWavAsset(assetMgr, "bass.wav", 0, 0f)
-        //loadWavAsset(assetMgr, "drums.wav", 1, 0f)
-        //loadWavAsset(assetMgr, "other.wav", 2, 0f)
-        //loadWavAsset(assetMgr, "vocals.wav", 3, 0f)
-
-    }
-
     fun loadMp3Assets() {
         val documentsDirectory = File(getApplication<Application>().filesDir, "documents")
         val localURLBass = File(documentsDirectory, "song/bass.mp3").absolutePath
@@ -303,25 +286,6 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
             }
         }
     }
-
-    fun unloadWavAssets() {
-        unloadWavAssetsNative()
-    }
-
-    private fun loadWavAsset(assetMgr: AssetManager, assetName: String, index: Int, pan: Float) {
-        try {
-            val assetFD = assetMgr.openFd(assetName)
-            val dataStream = assetFD.createInputStream()
-            val dataLen = assetFD.getLength().toInt()
-            val dataBytes = ByteArray(dataLen)
-            dataStream.read(dataBytes, 0, dataLen)
-            loadWavAssetNative(dataBytes, index, pan)
-            assetFD.close()
-        } catch (ex: IOException) {
-            Log.i(TAG, "IOException$ex")
-        }
-    }
-
 
     // Function to decrease the tempo by 0.1
     fun tempoDown() {
